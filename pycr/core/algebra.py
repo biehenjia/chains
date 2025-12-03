@@ -4,14 +4,14 @@ class Algebra:
 
     def __init__(self):
         
-        self.unaryTable = {}
-        self.binaryTable = {}
+        self.uTable = {}
+        self.bTable = {}
         self.commutesTable = {}
 
     def defineUnary(self, operator, uType):
 
         def registrar(fn):
-            self.unaryTable[operator][uType] = fn
+            self.uTable[operator][uType] = fn
             return fn
         return registrar
     
@@ -21,14 +21,14 @@ class Algebra:
         def registrar(fn):
             self.binaryTable[operator][(lType, rType)] = fn
             return fn
-        
         return registrar
+    
     
     def apply(self, operator, *args):
         if len(args) == 1:
             return self.applyUnary(operator, args[0])
         elif len(args) == 2:
-            return self.applyBinary(operator, args[1])
+            return self.applyBinary(operator, args[0], args[1])
         else:
             raise ValueError("????")
     
@@ -39,7 +39,7 @@ class Algebra:
             raise NotImplementedError(f"{operator} not defined on {type(u)}")
         return fn(u)
     
-    def applyBinray(self, operator, l,r ):
+    def applyBinary(self, operator, l,r ):
         table = self.binaryTable.get(operator,{})
         key = (type(l),type(r))
         fn = table.get(key)
