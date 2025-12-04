@@ -19,7 +19,7 @@ class Operator(IntEnum):
     EXP = auto()
     LOG = auto()
 
+
+
 PROTOCOL = hashlib.blake2b
-
-
 

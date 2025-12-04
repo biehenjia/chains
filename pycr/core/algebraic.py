@@ -3,9 +3,10 @@ from cr import *
 class Algebra:
 
     def __init__(self):
-        
+        # unary and binary operators
         self.uTable = {}
         self.bTable = {}
+        # binary operators with different orders
         self.commutesTable = {}
 
     def defineUnary(self, operator, uType):
@@ -19,10 +20,9 @@ class Algebra:
         
         self.commutesTable[operator] = commutative
         def registrar(fn):
-            self.binaryTable[operator][(lType, rType)] = fn
+            self.bTable[operator][(lType, rType)] = fn
             return fn
         return registrar
-    
     
     def apply(self, operator, *args):
         if len(args) == 1:
@@ -33,15 +33,22 @@ class Algebra:
             raise ValueError("????")
     
     def applyUnary(self, operator, u):
-        table = self.unaryTable.get(operator, {})
+        table = self.uTable.get(operator, {})
         fn = table.get(type(u))
         if fn is None:
             raise NotImplementedError(f"{operator} not defined on {type(u)}")
         return fn(u)
     
     def applyBinary(self, operator, l,r ):
-        table = self.binaryTable.get(operator,{})
-        key = (type(l),type(r))
+        # call the constant case if mismatch types
+        if l > r:
+            key = (type(l),type(CRnum))
+        elif r > l:
+            key = (type(CRnum), type(r))
+        else:
+            key = (type(l), type(r))
+        
+        table = self.bTable.get(operator,{})
         fn = table.get(key)
         if fn is None and self.commutesTable.get(operator, False):
             key = (type(r),type(l))
@@ -54,3 +61,6 @@ class Algebra:
         
         return fn(l,r)
 
+CRbigint = Algebra()
+CRfloat = Algebra()
+CRalgebra = Algebra()

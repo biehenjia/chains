@@ -1,0 +1,68 @@
+from algebraic import * 
+
+MUL = Operator.MUL
+
+@CRalgebra.defineBinary(MUL, CRnum, CRnum, commutative=True)
+def mulCRnumCRnum(l: CRnum, r: CRnum):
+    return CRnum(l.valueof() * r.valueof())
+
+@CRalgebra.defineBinary(MUL, CRsum, CRnum, commutative=True)
+def mulCRsumCRnum(l: CRsum, r: CRnum):
+    result = l.copy()
+    for i in range(len(result)):
+        result[i] *= r
+    return result
+
+@CRalgebra.defineBinary(MUL, CRsum, CRsum, commutative=True)
+def mulCRsumCRsum(l: CRsum, r: CRsum):
+    pass 
+
+@CRalgebra.defineBinary(MUL, CRprod, CRprod, commutative=True)
+def mulCRprodCRprod(l: CRprod, r: CRprod):
+    if len(r) > len(l):
+        l, r = r, l
+    result = l.copy()
+    for i in range(len(result)):
+        result[i] *= r[i]
+    return result
+
+@CRalgebra.defineBinary(MUL, CRprod, CRnum, commutative=True)
+def mulCRprodCRnum(l: CRprod, r: CRnum):
+    result = l.copy()
+    result[0] *= r
+    return result
+
+@CRalgebra.defineBinary(MUL, CRprod, CRtrig, commutative=True)
+def mulCRprodCRtrig(l: CRprod, r: CRtrig):
+    if len(r)//2 > len(l):
+        o1 = r
+        o2 = l.correctP(len(r)//2)
+        newlength = len(r)//2
+    elif len(r)//2 < len(l):
+        o1 = r.correctT(len(l))
+        o2 = l
+        newlength = len(l)//2
+    else:
+        o1 = r
+        o2 = l
+        newlength = len(r)//2
+    result = type(r)(r.order, newlength*2)
+    for i in range(newlength):
+        result[i] = o1[i] * o2[i]
+        result[i+newlength] = o1[i+newlength] * o2[i]
+    return result
+
+@CRalgebra.defineBinary(MUL, CRsin, CRnum, commutative=True)
+def mulCRsinCRnum(l: CRsin, r: CRnum):
+    result = l.copy()
+    result[0] *= r
+    result[len(result)//2] *= r
+    return result
+
+@CRalgebra.defineBinary(MUL, CRcos, CRnum, commutative=True)
+def mulCRcosCRnum(l: CRcos, r: CRnum):
+    result = l.copy()
+    result[0] *= r
+    result[len(result)//2] *= r
+    return result
+
