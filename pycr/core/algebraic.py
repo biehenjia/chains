@@ -1,4 +1,18 @@
-from cr import *
+
+
+ADD = 'ADD'
+MUL = 'MUL'
+POW = 'POW'
+DIV = 'DIV'
+
+SIN = 'SIN'
+COS = 'COS'
+TAN = 'TAN'
+COT = 'COT'
+
+EXP = 'EXP'
+LOG = 'LOG'
+
 
 class Algebra:
 
@@ -8,6 +22,7 @@ class Algebra:
         self.bTable = {}
         # binary operators with different orders
         self.commutesTable = {}
+        self.defaultTable = {}
 
     def defineUnary(self, operator, uType):
 
@@ -24,11 +39,11 @@ class Algebra:
             return fn
         return registrar
     
-    def apply(self, operator, *args):
+    def apply(self, operator, *args, key=None):
         if len(args) == 1:
             return self.applyUnary(operator, args[0])
         elif len(args) == 2:
-            return self.applyBinary(operator, args[0], args[1])
+            return self.applyBinary(operator, args[0], args[1], key)
         else:
             raise ValueError("????")
     
@@ -36,18 +51,16 @@ class Algebra:
         table = self.uTable.get(operator, {})
         fn = table.get(type(u))
         if fn is None:
-            raise NotImplementedError(f"{operator} not defined on {type(u)}")
+            return self.defaultTable.get(operator, lambda x:x)(u)
         return fn(u)
+    # merge above logic
+
+    def defineDefault(self, operator):
+        def registrar(fn):
+            self.defaultTable[operator] = fn
+            return fn
     
-    def applyBinary(self, operator, l,r ):
-        # call the constant case if mismatch types
-        if l > r:
-            key = (type(l),type(CRnum))
-        elif r > l:
-            key = (type(CRnum), type(r))
-        else:
-            key = (type(l), type(r))
-        
+    def applyBinary(self, operator, l,r, key):        
         table = self.bTable.get(operator,{})
         fn = table.get(key)
         if fn is None and self.commutesTable.get(operator, False):
@@ -57,9 +70,11 @@ class Algebra:
                 return fn(r,l)
         
         if fn is None:
-            raise NotImplementedError(f"{operator} not defined on {type(l)} and {type(r)}")
+            return self.defaultTable.get(operator,lambda x,y: (x,y))(l,r)
         
         return fn(l,r)
+    
+    
 
 CRbigint = Algebra()
 CRfloat = Algebra()

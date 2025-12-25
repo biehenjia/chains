@@ -1,6 +1,15 @@
-from algebraic import * 
+from cr import *
 
-MUL = Operator.MUL
+'''
+valid multiplications:
+CRnum * CRnum  
+CRsum * CRnum 
+CRsum * CRsum
+CRprod * CRprod
+CRprod * CRnum
+CRprod * CRtrig
+'''
+
 
 @CRalgebra.defineBinary(MUL, CRnum, CRnum, commutative=True)
 def mulCRnumCRnum(l: CRnum, r: CRnum):
@@ -15,7 +24,21 @@ def mulCRsumCRnum(l: CRsum, r: CRnum):
 
 @CRalgebra.defineBinary(MUL, CRsum, CRsum, commutative=True)
 def mulCRsumCRsum(l: CRsum, r: CRsum):
-    pass 
+    if len(r) > len(l):
+        l, r = r,l
+    n = len(l) - 1
+    m = len(r) - 1
+    result = CRsum(l.order, n+m+1)
+    for i in range(len(result)):
+        r1 = CRnum(0)
+        for j in range(max(0,i-m),min(i,n)+1):
+            r2 = CRnum(0)
+            for k in range(i-j,min(i,m)):
+                r2 += CRnum(math.comb(j,i-k)) * r[k]
+            r2 *= math.comb(i,j)
+            r1 += l[j] * r2
+        result[i] = r1
+    return result.simplify()
 
 @CRalgebra.defineBinary(MUL, CRprod, CRprod, commutative=True)
 def mulCRprodCRprod(l: CRprod, r: CRprod):
@@ -65,4 +88,11 @@ def mulCRcosCRnum(l: CRcos, r: CRnum):
     result[0] *= r
     result[len(result)//2] *= r
     return result
+
+# --- DEFAULTS ---
+
+
+@CRalgebra.defineDefault(MUL)
+def defaultMul(l, r):
+    return CREmul(l,r )
 

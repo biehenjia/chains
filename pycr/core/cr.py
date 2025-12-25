@@ -1,10 +1,18 @@
-from util import *
+import math, sys, hashlib
+import struct
+from algebraic import *
+EPSILON = sys.float_info.epsilon
+PROTOCOL = hashlib.blake2b
+
+algebra = CRalgebra #...?
 
 class CR:
     def __init__(self, order, length):
         self.order = order 
         self.operands = [None for i in range(length)]
         self.digested = None
+
+        self.dependencies = set()
     
     def __len__(self):
         return len(self.operands)
@@ -55,6 +63,7 @@ class CR:
             h.update(cr.crdigest())
         self.digested = h.digest()
         return self.digested
+    
 
 class CRsum(CR):
     def simplify(self):
@@ -67,6 +76,15 @@ class CRsum(CR):
             return CRnum(0)
         else:
             return result
+    
+    def __add__(self, target):
+        if self > target:
+            key = (type(self), CRnum)
+        elif self < target:
+            key = (CRnum, type(target))
+        else:
+            key = (type(self), type(target))
+        return CRalgebra.apply(ADD, self, target, key=key)
 
 class CRnum(CR):
     def __init__(self, value):
@@ -107,8 +125,11 @@ class CRnum(CR):
         
         self.digested = h.digest()
         return self.digested
-
     
+    def isinteger(self):
+        return isinstance(self.value, int) or (isinstance(self.value, float) and self.value.is_integer())
+
+
         
     
 class CRprod(CR):
@@ -176,9 +197,13 @@ class CRtan(CRtrig):
         return self[0].valueof()/self[len(self)//2].valueof()
 
 class CRE(CR):
+    
     pass
 
 class CREadd(CR):
+    def __init__(self, *operands):
+        pass
+
     def crdigest(self):
         if not self.digested is None:
             return self.digested
@@ -206,4 +231,34 @@ class CREmul(CR):
             h.update(s)
         self.digested = h.digest()
         return self.digested
+
+class CREpow(CR): 
+    # TODO: fix
+    def crdigest(self):
+        if not self.digested is None:
+            return self.digested
+        
+        h = PROTOCOL(digest_size=16)
+        h.update(type(self).__name__.encode())
+
+        sdigests = sorted(cr.digest() for cr in self)
+        for s in sdigests:
+            h.update(s)
+        self.digested = h.digest()
+        return self.digested
+    
+class CREsin(CR):
+    pass 
+
+
+class CREcos(CR):
+    pass 
+
+
+class CREtan(CR ):
+    pass
+
+
+class CREcot(CR):
+    pass
 

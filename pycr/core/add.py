@@ -1,7 +1,14 @@
-from algebraic import *
+from cr import *
 
-ADD = Operator.ADD
+'''
+valid additions:
+CRnum + CRnum
+CRnum + CRsum
+CRsum + CRsum
 
+'''
+
+# region: valid additions
 @CRalgebra.defineBinary(ADD, CRnum, CRnum,commutative=True)
 def addCRnumCRnum(l: CRnum, r: CRnum):
     return CRnum(l.valueof() + r.valueof())
@@ -20,6 +27,17 @@ def addCRsumCRsum(l: CRsum, r: CRsum):
     for i in range(len(r)):
         result[i] += r[i]
     return result
+
+#endregion
+
+
+# --- DEFAULTS ---
+
+@CRalgebra.defineDefault(ADD)
+def defaultAdd(l, r):
+    return CREadd(l,r )
+
+
 
 
 
