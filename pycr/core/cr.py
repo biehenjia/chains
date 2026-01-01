@@ -1,6 +1,6 @@
 import math, sys, hashlib
 import struct
-from algebraic import *
+from .algebraic import *
 EPSILON = sys.float_info.epsilon
 PROTOCOL = hashlib.blake2b
 
@@ -201,8 +201,9 @@ class CRE(CR):
     pass
 
 class CREadd(CR):
-    def __init__(self, *operands):
-        pass
+    def __init__(self, l, r):
+        self.l = l
+        self.r = r
 
     def crdigest(self):
         if not self.digested is None:
@@ -262,3 +263,28 @@ class CREtan(CR ):
 class CREcot(CR):
     pass
 
+
+def sin(arg):
+    if isinstance(arg, (float, int )):
+        return math.sin(arg)
+    elif isinstance(arg, CR):
+        return arg.sin()
+
+def cos(arg):
+    if isinstance(arg, (float, int )):
+        return math.cos(arg)
+    elif isinstance(arg, CR):
+        return arg.cos()
+
+def tan(arg):
+    if isinstance(arg, (float, int )):
+        return math.tan(arg)
+    elif isinstance(arg, CR):
+        return arg.tan()
+
+def cot(arg):
+    if isinstance(arg, (float, int )):
+        return 1/math.tan(arg)
+    elif isinstance(arg, CR):
+        return arg.cot()
+    

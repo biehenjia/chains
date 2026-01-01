@@ -25,14 +25,16 @@ class Algebra:
         self.defaultTable = {}
 
     def defineUnary(self, operator, uType):
-
+        if operator not in self.uTable:
+            self.uTable[operator] = {}
         def registrar(fn):
             self.uTable[operator][uType] = fn
             return fn
         return registrar
     
     def defineBinary(self, operator, lType, rType, commutative=False):
-        
+        if operator not in self.bTable:
+            self.bTable[operator] = {}
         self.commutesTable[operator] = commutative
         def registrar(fn):
             self.bTable[operator][(lType, rType)] = fn
@@ -59,6 +61,7 @@ class Algebra:
         def registrar(fn):
             self.defaultTable[operator] = fn
             return fn
+        return registrar
     
     def applyBinary(self, operator, l,r, key):        
         table = self.bTable.get(operator,{})

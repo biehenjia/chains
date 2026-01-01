@@ -1,4 +1,4 @@
-from cr import *
+from .cr import *
 
 '''
 Types: CRnum, CRsum, CRprod, CRtrig
