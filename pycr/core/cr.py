@@ -197,57 +197,38 @@ class CRtan(CRtrig):
         return self[0].valueof()/self[len(self)//2].valueof()
 
 class CRE(CR):
+    def __init__(self, l, r):
+        self.l = l 
+        self.r = r
+    
+    def crdigest(self):
+        if not self.digested is None:
+            return self.digested
+        
+        h = PROTOCOL(digest_size=16)
+        h.update(type(self).__name__.encode())
+
+        sdigests = sorted(cr.digest() for cr in self)
+        for s in sdigests:
+            h.update(s)
+        self.digested = h.digest()
+        return self.digested
+    
+
+
+class CREadd(CR):
+    pass
+
+class CREmul(CR): 
     
     pass
 
-class CREadd(CR):
-    def __init__(self, l, r):
-        self.l = l
-        self.r = r
-
-    def crdigest(self):
-        if not self.digested is None:
-            return self.digested
-        
-        h = PROTOCOL(digest_size=16)
-        h.update(type(self).__name__.encode())
-
-        sdigests = sorted(cr.digest() for cr in self)
-        for s in sdigests:
-            h.update(s)
-        self.digested = h.digest()
-        return self.digested
-
-
-class CREmul(CR): 
-    def crdigest(self):
-        if not self.digested is None:
-            return self.digested
-        
-        h = PROTOCOL(digest_size=16)
-        h.update(type(self).__name__.encode())
-
-        sdigests = sorted(cr.digest() for cr in self)
-        for s in sdigests:
-            h.update(s)
-        self.digested = h.digest()
-        return self.digested
-
 class CREpow(CR): 
     # TODO: fix
-    def crdigest(self):
-        if not self.digested is None:
-            return self.digested
-        
-        h = PROTOCOL(digest_size=16)
-        h.update(type(self).__name__.encode())
-
-        sdigests = sorted(cr.digest() for cr in self)
-        for s in sdigests:
-            h.update(s)
-        self.digested = h.digest()
-        return self.digested
+    pass 
     
+class CREtrig(CR):
+    pass
 class CREsin(CR):
     pass 
 
