@@ -1,0 +1,6 @@
+# Core mathematical computing library
+sympy>=1.12
+
+# Optional: Add other dependencies as needed
+# numpy>=1.24.0
+# matplotlib>=3.7.0

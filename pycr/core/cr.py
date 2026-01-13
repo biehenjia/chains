@@ -13,6 +13,7 @@ class CR:
         self.digested = None
 
         self.dependencies = set()
+
     
     def __len__(self):
         return len(self.operands)
@@ -63,6 +64,8 @@ class CR:
             h.update(cr.crdigest())
         self.digested = h.digest()
         return self.digested
+    
+    
     
 
 class CRsum(CR):
@@ -229,19 +232,20 @@ class CREpow(CR):
     
 class CREtrig(CR):
     pass
-class CREsin(CR):
+
+class CREsin(CREtrig):
     pass 
 
 
-class CREcos(CR):
+class CREcos(CREtrig):
     pass 
 
 
-class CREtan(CR ):
+class CREtan(CREtrig):
     pass
 
 
-class CREcot(CR):
+class CREcot(CREtrig):
     pass
 
 
