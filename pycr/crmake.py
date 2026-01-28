@@ -1,4 +1,4 @@
-from core import *
+from core_deprecated import *
 from sympy import Add, Mul, Pow, cos, sin, tan
 print("loaded!")
 

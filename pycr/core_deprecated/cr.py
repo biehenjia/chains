@@ -64,6 +64,9 @@ class CR:
             h.update(cr.crdigest())
         self.digested = h.digest()
         return self.digested
+
+    
+
     
     
     
@@ -133,7 +136,6 @@ class CRnum(CR):
         return isinstance(self.value, int) or (isinstance(self.value, float) and self.value.is_integer())
 
 
-        
     
 class CRprod(CR):
     def simplify(self):
