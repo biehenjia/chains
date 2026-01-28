@@ -65,11 +65,6 @@ class CR:
         self.digested = h.digest()
         return self.digested
 
-    
-
-    
-    
-    
 
 class CRsum(CR):
     def simplify(self):
@@ -91,6 +86,12 @@ class CRsum(CR):
         else:
             key = (type(self), type(target))
         return CRalgebra.apply(ADD, self, target, key=key)
+
+    def seed(self, start, step):
+        a = CRnum(start)
+        b = CRnum(step)
+        self.operands[0] = a
+        self.operands[1] = b
 
 class CRnum(CR):
     def __init__(self, value):
