@@ -7,3 +7,7 @@
 # python expr should be decorator?
 # 
 from .io import *
+
+__all__ = [
+    'parse_string'
+]

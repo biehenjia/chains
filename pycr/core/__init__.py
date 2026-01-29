@@ -7,6 +7,7 @@ from .pow import *
 from .sin import *
 from .cos import *
 from .tan import *
+from .log import * 
 
 __all__ = [
     'CR', 'CRnum', 'CRsum', 'CRprod', 
@@ -14,5 +15,5 @@ __all__ = [
     'CRE', 'CREadd', 'CREmul', 'CREpow',
     'CREtrig', 'CREsin', 'CREcos', 'CREtan', 'CREcot',
 
-    'sin', 'cos', 'tan','cot',
+    'sin', 'cos', 'tan','cot', 'log'
 ]

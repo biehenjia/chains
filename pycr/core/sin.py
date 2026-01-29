@@ -11,7 +11,7 @@ def sinCRnum(u):
 
 @CRalgebra.defineUnary(SIN, CRsum)
 def sinCRsum(u):
-    result = CRtrig(len(u)*2)
+    result = CRsin(order=u.order, length=len(u)*2)
     for i in range(len(u)):
         result[i] = sin(u[i])
         result[i+len(u)] = cos(u[i])

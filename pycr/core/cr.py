@@ -17,6 +17,7 @@ class CR:
     def __init__(self, order, length):
         self.order = order
         self.length = length
+        self.operands = [None]*length
     
     def __len__(self):
         return len(self.operands)
@@ -61,22 +62,41 @@ class CR:
         key = (type(self),type(target))
         return CRalgebra.apply(POW, self, target, key=key)
 
-    def sin(self, target):
+    def sin(self):
         return CRalgebra.apply(SIN, self, key=type(self))
 
-    def cos(self, target):
+    def cos(self):
         return CRalgebra.apply(COS, self, key=type(self))
 
-    def tan(self, target):
+    def tan(self):
         return CRalgebra.apply(TAN, self, key=type(self))
     
-    def cot(self, target):
+    def cot(self):
         return CRalgebra.apply(COT, self, key=type(self))
     
-    def log(self, target):
+    def log(self, target=None):
+        if target is None:
+            target = CRnum(sympy.E)
         key = (type(self), type(target))
         return CRalgebra.apply(LOG, self, target, key=key)
 
+    def __str__(self):
+        layers = [f"{self.__class__.__name__}({self.order})"]
+        for i,node in enumerate(self):
+            layers.extend(node.walk_str("",i== len(self)-1))
+        return "\n".join(layers)
+    
+    def walk_str(self,prefix="", terminal=True):
+        pipe = "└─ " if terminal else "├─ "
+        layer = f"{prefix}{pipe}{self.__class__.__name__}({self.valueof(),self.order})"
+        layers = [layer]
+        prefix_c = f"{prefix}{'   ' if terminal else '|  '} "
+        for i,node in enumerate(self):
+            layers.extend(node.walk_str(prefix_c,i == len(self)-1 ))
+        return layers
+    
+    def valueof(self):
+        return self[0].valueof()
 
 class CRnum(CR):
     # can be numeric: rational, expression, symbolic
@@ -109,6 +129,12 @@ class CRnum(CR):
     
     def is_integer(self):
         return self.value.is_integer
+    
+    def __str__(self):
+        return f"CRnum({self.value})"
+    
+    def walk_str(self, prefix="", terminal=True):
+        return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
 
 class CRsum(CR):
     def simplify(self):
@@ -179,21 +205,27 @@ class CRtan(CRtrig):
 class CRE(CR):
 
     def __init__(self, l, r):
-        self.l = l 
-        self.r = r
+        self.operands = [l,r]
+        self.order = max(l.order, r.order)
 
-class CREadd(CR):
+class CREadd(CRE):
     pass
 
-class CREmul(CR): 
+class CREmul(CRE): 
     pass
 
-class CREpow(CR): 
+class CRElog(CRE):
+    pass
+
+class CREpow(CRE): 
     # TODO: fix
     pass 
     
-class CREtrig(CR):
-    pass
+class CREtrig(CRE):
+    
+    def __init__(self, l):
+        self.operands = [l]
+        self.order = l.order
 
 class CREsin(CREtrig):
     pass 
@@ -207,8 +239,6 @@ class CREtan(CREtrig):
 
 class CREcot(CREtrig):
     pass
-
-
 
 def sin(arg):
     if isinstance(arg, sympy.Expr):
@@ -234,5 +264,12 @@ def cot(arg):
     elif isinstance(arg, CR):
         return arg.cot()
 
-
-
+def log(arg, base = None):
+    if isinstance(arg, sympy.Expr):
+        if base is None:
+            base = sympy.E
+        return sympy.log(arg, base)
+    elif isinstance(arg, CR):
+        if base is None:
+            base = CRnum(sympy.E)
+        return arg.log(base) 

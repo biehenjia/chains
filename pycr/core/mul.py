@@ -8,6 +8,8 @@ CRsum * CRsum
 CRprod * CRprod
 CRprod * CRnum
 CRprod * CRtrig
+
+
 '''
 
 
@@ -88,6 +90,8 @@ def mulCRcosCRnum(l: CRcos, r: CRnum):
     result[0] *= r
     result[len(result)//2] *= r
     return result
+
+
 
 # --- DEFAULTS ---
 
