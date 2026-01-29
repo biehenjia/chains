@@ -34,8 +34,8 @@ def mulCRsumCRsum(l: CRsum, r: CRsum):
         for j in range(max(0,i-m),min(i,n)+1):
             r2 = CRnum(0)
             for k in range(i-j,min(i,m)):
-                r2 += CRnum(sympy.binomial(j,i-k)) * r[k]
-            r2 *= sympy.binomial(i,j)
+                r2 += CRnum(math.comb(j,i-k)) * r[k]
+            r2 *= math.comb(i,j)
             r1 += l[j] * r2
         result[i] = r1
     return result.simplify()

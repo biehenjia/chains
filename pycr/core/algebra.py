@@ -66,6 +66,7 @@ class Algebra:
     
     def applyBinary(self, operator, l,r, key):        
         table = self.bTable.get(operator,{})
+        print(key)
         fn = table.get(key)
         if fn is None and self.commutesTable.get(operator, False):
             key = (type(r),type(l))

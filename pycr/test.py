@@ -1,9 +1,8 @@
 import sympy
 
-a = 0
+s = '2**x'
 
-as_thing = sympy.Integer(a)
-b = sympy.Integer(as_thing)
+expr = sympy.sympify(s)
 
-print(b)
-print(type(b))
+ls = sympy.ln(expr)
+print(ls)

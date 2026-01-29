@@ -65,7 +65,7 @@ def powCRprodCRsum(l: CRprod, r: CRsum):
         for j in range(max(0,i-m),min(i,n)+1):
             r2 = CRnum(1)
             for k in range(i-j,min(i,m)):
-                r2 *= l[j] ** r[k] * CRnum(sympy.binomial(j,i-k)*sympy.binomial(i,j))
+                r2 *= l[j] ** r[k] * CRnum(math.comb(j,i-k)*math.comb(i,j))
             r1 *= r2
         result[i] = r1
     return result.simplify()

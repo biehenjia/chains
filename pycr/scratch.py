@@ -1,6 +1,6 @@
 import sympy
 
-s = sympy.Symbol('x')
+s = 'pi/2 + pi'
 
-s += 2 
-print(type(s))
+expr = sympy.sympify(s)
+print(sympy.sin(expr))
