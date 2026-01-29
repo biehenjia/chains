@@ -1,7 +1,9 @@
-e = 'x**3 + 2*x**2+4+y+e'
+import sympy
 
-from sympy import *
+a = 0
 
-expr = sympify(e)
-symbols = expr.free_symbols
-print(symbols)
+as_thing = sympy.Integer(a)
+b = sympy.Integer(as_thing)
+
+print(b)
+print(type(b))
