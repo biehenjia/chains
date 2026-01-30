@@ -2,7 +2,6 @@ import sympy
 
 # TODO: error reduction
 
-# RIVET: the process of closing chain links in chainmail forging 
 def parse_string(s,error_reduction = 0):
     expr = sympy.parsing.sympy_parser.parse_expr(s)
     if error_reduction:

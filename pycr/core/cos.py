@@ -6,7 +6,7 @@ def cosCRnum(u):
 
 @CRalgebra.defineUnary(COS, CRsum)
 def cosCRsum(u):
-    result = CRcos(len(u)*2)
+    result = CRcos(order=u.order, length=len(u)*2)
     for i in range(len(u)):
         result[i] = sin(u[i])
         result[i+len(u)] = cos(u[i])

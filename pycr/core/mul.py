@@ -35,12 +35,12 @@ def mulCRsumCRsum(l: CRsum, r: CRsum):
         r1 = CRnum(0)
         for j in range(max(0,i-m),min(i,n)+1):
             r2 = CRnum(0)
-            for k in range(i-j,min(i,m)):
+            for k in range(i-j,min(i,m)+1):
                 r2 += CRnum(sympy.binomial(j,i-k)) * r[k]
-            r2 *= sympy.binomial(i,j)
+            r2 *= CRnum(sympy.binomial(i,j))
             r1 += l[j] * r2
         result[i] = r1
-    return result.simplify()
+    return result
 
 @CRalgebra.defineBinary(MUL, CRprod, CRprod, commutative=True)
 def mulCRprodCRprod(l: CRprod, r: CRprod):

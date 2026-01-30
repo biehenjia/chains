@@ -22,7 +22,7 @@ def powCRnumCRnum(l: CRnum, r: CRnum):
 
 @CRalgebra.defineBinary(POW, CRsum, CRnum)
 def powCRsumCRnum(l: CRsum, r: CRnum):
-    if r.isinteger():
+    if r.is_integer():
         result = CRnum(1)
         if r.valueof() >= 0:
             v = int(r.valueof())
@@ -64,7 +64,7 @@ def powCRprodCRsum(l: CRprod, r: CRsum):
         r1 = CRnum(1)
         for j in range(max(0,i-m),min(i,n)+1):
             r2 = CRnum(1)
-            for k in range(i-j,min(i,m)):
+            for k in range(i-j,min(i,m)+1):
                 r2 *= l[j] ** r[k] * CRnum(sympy.binomial(j,i-k)*sympy.binomial(i,j))
             r1 *= r2
         result[i] = r1

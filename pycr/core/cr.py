@@ -97,6 +97,9 @@ class CR:
     
     def valueof(self):
         return self[0].valueof()
+    
+    
+    
 
 class CRnum(CR):
     # can be numeric: rational, expression, symbolic
@@ -133,6 +136,11 @@ class CRnum(CR):
     def __str__(self):
         return f"CRnum({self.value})"
     
+    
+
+    def __len__(self):
+        return 0
+    
     def walk_str(self, prefix="", terminal=True):
         return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
 
@@ -140,9 +148,11 @@ class CRsum(CR):
     def simplify(self):
         result = self.copy()
         j = len(result) - 1
-        while (j > 0) and isinstance(self[j], CRnum) and self[j].is_zero():
+        print('hi!')
+        print(result.operands)
+        while len(result) > 0 and isinstance(result[-1], CRnum) and result[-1].is_zero():
             result.pop()
-        if j == 0:
+        if len(result) == 0:
             return CRnum(0)
         else:
             return result

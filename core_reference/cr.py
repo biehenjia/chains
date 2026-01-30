@@ -75,6 +75,8 @@ class CRsum(CR):
             j -= 1
         if j == 0:
             return CRnum(0)
+        elif j == 1 and isinstance(result[0], CRnum):
+            return result[0]
         else:
             return result
     

@@ -1,9 +1,12 @@
-import api, engine
+import api, engine, core
 
-def test():
-    expr = "3+log(x)+y"
-    ast, symbol_table = api.parse_string(expr)
-    cr_tree = engine.crmake(ast, symbol_table)
-    print(cr_tree)
+expr = 'sin(x)**2+cos(x)**2'
+s, symbol_table = api.parse_string(expr)
+cr = engine.crmake(s, symbol_table)
 
-test()
+temp = core.CRnum(5)
+temp *= cr
+print(cr)
+term = engine.CRterm(temp, (None, None))
+tape = term.produce_tape()
+print(tape)
