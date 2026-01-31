@@ -13,9 +13,8 @@ class CRterm:
 
         self.start = None
 
-        # (source_index, parent, update_index) pairs
-        self.parents = [parent_update]
-        self.update_indices = []
+        # (source_index, parent (CRterm), update_index) 
+        self.update = [] # (source, parent, index in parent)
         # terminus node
         if isinstance(cr, CRnum):
             pass
@@ -72,7 +71,7 @@ class CRterm:
             if isinstance(node.cr, CRnum):
                 continue
             node.crdigest()
-            for i in range(len(node.digests)):
+            for i in range(len(node.digests)-1):
                 suffix = node.digests[i]
                 if suffix not in id_map:
                     node_id = len(id_map)
@@ -80,6 +79,9 @@ class CRterm:
                     memo[suffix] = node_id
                 else:
                     original,p = id_map[memo[suffix]]
+                    # write the p-th index of original into node's i-th index.
+                    original.update.append((p,node,i))
+                    break
     
     def codegen(self):
         pass

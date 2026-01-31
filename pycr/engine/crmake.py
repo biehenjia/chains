@@ -32,9 +32,14 @@ def crmake(ASTnode, symbol_table):
         return result
     
     elif isinstance(ASTnode, sympy.Pow):
+        print('here!')
         base = crmake(ASTnode.args[0], symbol_table)
         exponent = crmake(ASTnode.args[1], symbol_table)
         return base ** exponent
+    
+    elif isinstance(ASTnode, sympy.exp):
+        arg = crmake(ASTnode.args[0], symbol_table)
+        return CRnum(sympy.E)**arg
     
     elif isinstance(ASTnode,sympy.functions.elementary.trigonometric.TrigonometricFunction):
         if isinstance(ASTnode, sympy.sin):

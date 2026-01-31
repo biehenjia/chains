@@ -8,10 +8,7 @@ CRsum * CRsum
 CRprod * CRprod
 CRprod * CRnum
 CRprod * CRtrig
-
-
 '''
-
 
 @CRalgebra.defineBinary(MUL, CRnum, CRnum, commutative=True)
 def mulCRnumCRnum(l: CRnum, r: CRnum):
