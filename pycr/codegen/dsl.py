@@ -120,18 +120,12 @@ def build( args, blocks, filename="<generated code>"):
     f = ast.FunctionDef(
         name=fname,
         args=ast.arguments(
-            posonlyargs=[],
-            args=[ast.arg(arg=a) for a in args],
-            kwonlyargs=[],
-            kw_defaults=[],
-            defaults=[],
-            vararg=None,
-            kwarg=None,
+            posonlyargs=[], args=[ast.arg(arg=a) for a in args],
+            kwonlyargs=[], kw_defaults=[],
+            defaults=[], vararg=None, kwarg=None,
         ),
-        body=body,
-        decorator_list=[],
-        returns=None,
-        type_comment=None,
+        body=body, decorator_list=[],
+        returns=None, type_comment=None,
     )
 
     f.lineno = 1

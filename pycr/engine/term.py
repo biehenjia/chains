@@ -1,51 +1,37 @@
-import sys, hashlib
-from sympy import srepr
 from core import *
-import codegen
+import hashlib
+from sympy import srepr
+
 
 PROTOCOL = hashlib.blake2b
 
+
 class CRterm:
 
-    def __init__(self, cr, parent_update=None):
-        self.cr = cr
-        self.digests = None
-        self.node_id = None
+    def __init__(self, cr, parent):
+        self.cr = cr 
 
-        self.start = None
-        self.end = None
-        
-        # (source_index, parent (CRterm), update_index) 
-        self.update = [] # (source, parent, index in parent)
-        # terminus node
-        if isinstance(cr, CRnum):
+        if not isinstance(cr, CRnum):
+            # hashing is based on subarena
+            self.subarena = []
+            self.terms = []
+            self.digests = []
+            self.dependencies = {cr.order,}
+            for i,o in enumerate(cr):
+                self.subarena.append(o.valueof())
+                self.terms.append( CRterm(o, (self,i)) )
+    
+    def cse(self):
+        if not isinstance(self.cr, CRnum):
             pass
-        # has children type node
-        else:
-            self.terms = [CRterm(t, (self, i)) for i, t in enumerate(cr)]
-            self.dependencies = set()
-            self.dependencies.add(cr.order)
-            self.length = len(cr)
 
-    
-    # produces tape representation of the required expression from CR form
-    def produce_tape(self):
-        tape = []
-        for t in self.postorder():
-            if isinstance(t.cr, CRnum):
-                continue
-            t.start = len(tape)
-            for i in range(min(len(t.cr),t.length)):
-                tape.append(t.cr[i].valueof())
-        return tape
-    
     def postorder(self):
         if isinstance(self.cr, CRnum):
-            return
+            return 
         for t in self.terms:
             yield from t.postorder()
-        yield self
-
+        yield self 
+            
     def crdigest(self):
         if self.digests is not None:
             return self.digests[0]
@@ -57,61 +43,34 @@ class CRterm:
             self.digests = [h.digest()]
             return self.digests[0]
         
-
-        h = PROTOCOL(digest_size=16)
-        h.update(type(self.cr).__name__.encode())
-        # compute suffix hash
-        self.digests = [None] * (len(self.cr))
-        for i in range(len(self.cr)):
-            h.update(self.terms[-i-1].crdigest())
-            self.digests[-i-1] = h.digest()
+        elif isinstance(self.cr, CRtrig):
+            pass
+        else:
+            h = PROTOCOL(digest_size=16)
+            h.update(type(self.cr).__name__.encode())
+            # compute suffix hash
+            self.digests = [None] * (len(self.cr))
+            for i in range(len(self.cr)):
+                h.update(self.terms[-i-1].crdigest())
+                self.digests[-i-1] = h.digest()
         return self.digests[0]
-    
-    def cse(self):
-        print('started cse')
-        id_map = {}
-        memo = {}
 
-        # label nodes:
-        for node in self.postorder():
-            if isinstance(node.cr, CRnum):
-                continue
-            node.crdigest()
-            for i in range(len(node.digests)-1):
-                suffix = node.digests[i]
-                if suffix not in memo:
-                    node_id = len(id_map)
-                    id_map[node_id] = (node, i)
-                    memo[suffix] = node_id
-                else:
-                    original,p = id_map[memo[suffix]]
-                    # write the p-th index of original into node's i-th index.
-                    original.update.append((p,node,i))
-                    self.length -= len(original.cr)
-                    break
-    
-    def update_depndencies(self):
+    def propogate_dependencies(self):
         for term in self.postorder():
             if isinstance(term.cr, CRnum):
                 continue
             for child in term.terms:
                 term.dependencies |= child.dependencies
-        
-    def partition_order(self,bucket_number):
-        buckets = [[] for _ in range(bucket_number)]
+    
+    # returns all of the terms who's CR's need to be shifted when we
+    # shift by that order.
+    def partition_byorder(self, symbol_table):
+        buckets = [[] for _ in range(len(symbol_table))]
         for term in self.postorder():
             if isinstance(term.cr, CRnum):
                 continue
-
             for dep in term.dependencies:
                 buckets[dep].append(term)
         return buckets
     
-
-
-
-        
-
-
-
-   
+    
