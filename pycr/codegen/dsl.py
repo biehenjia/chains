@@ -15,7 +15,7 @@ def Attr(expr, name):
 def Call(f, *args): 
     return ast.Call(func=f, args=list(args),keywords=[])
 
-def Bin(op, left, right): 
+def Bin(left, op, right):
     return ast.BinOp(left=left, op=op, right=right)
 
 def Unary(op, operand): 
@@ -80,30 +80,68 @@ def ASTExp(expr):
 def ASTLog(expr):
     return Call(Attr(L('math'),'log'),expr)
 
+
 def ASTAdd(left, right):
     return Bin(left, ast.Add(), right)
-
-def ASTMul(left, right):
-    return Bin(left, ast.Mult(), right)
-
-def ASTNeg(operand):
-    return Unary(ast.USub(), operand)
 
 def ASTSub(left, right):
     return Bin(left, ast.Sub(), right)
 
-def ASTPow(left, right):
-    return Bin(left, ast.Pow(), right)
+def ASTMul(left, right):
+    return Bin(left, ast.Mult(), right)
 
 def ASTDiv(left, right):
     return Bin(left, ast.Div(), right)
 
+def ASTPow(left, right):
+    return Bin(left, ast.Pow(), right)
 
-# build a simple AST to loop through a function
 
-def build(f, filename = "<generated code>"):
+def ASTNeg(operand):
+    return Unary(ast.USub(), operand)
+
+def seed_locations(node, lineno=1, col=0):
+    for n in ast.walk(node):
+        attrs = getattr(n, "_attributes", ())
+        if "lineno" in attrs:
+            n.lineno = getattr(n, "lineno", lineno) or lineno
+        if "col_offset" in attrs:
+            n.col_offset = getattr(n, "col_offset", col) or col
+
+def build( args, blocks, filename="<generated code>"):
+    # blocks: list of lists of ast.stmt, or a flat list of ast.stmt
+    body = []
+    for b in blocks:
+        if isinstance(b, list):
+            body.extend(b)
+        else:
+            body.append(b)
+    fname = "_generated"
+    f = ast.FunctionDef(
+        name=fname,
+        args=ast.arguments(
+            posonlyargs=[],
+            args=[ast.arg(arg=a) for a in args],
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
+            vararg=None,
+            kwarg=None,
+        ),
+        body=body,
+        decorator_list=[],
+        returns=None,
+        type_comment=None,
+    )
+
+    f.lineno = 1
+    f.col_offset = 0
+    seed_locations(f, 1, 0)
+
     mod = ast.Module(body=[f], type_ignores=[])
     ast.fix_missing_locations(mod)
+
     ns = {}
+    print(ast.unparse(mod))
     exec(compile(mod, filename, "exec"), ns, ns)
-    return ns[f.name]
+    return ns[fname]

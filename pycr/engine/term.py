@@ -1,18 +1,20 @@
 import sys, hashlib
 from sympy import srepr
 from core import *
+import codegen
 
 PROTOCOL = hashlib.blake2b
 
 class CRterm:
 
-    def __init__(self, cr, parent_update):
+    def __init__(self, cr, parent_update=None):
         self.cr = cr
         self.digests = None
         self.node_id = None
 
         self.start = None
-
+        self.end = None
+        
         # (source_index, parent (CRterm), update_index) 
         self.update = [] # (source, parent, index in parent)
         # terminus node
@@ -21,6 +23,10 @@ class CRterm:
         # has children type node
         else:
             self.terms = [CRterm(t, (self, i)) for i, t in enumerate(cr)]
+            self.dependencies = set()
+            self.dependencies.add(cr.order)
+            self.length = len(cr)
+
     
     # produces tape representation of the required expression from CR form
     def produce_tape(self):
@@ -29,7 +35,7 @@ class CRterm:
             if isinstance(t.cr, CRnum):
                 continue
             t.start = len(tape)
-            for i in range(len(t.cr)):
+            for i in range(min(len(t.cr),t.length)):
                 tape.append(t.cr[i].valueof())
         return tape
     
@@ -41,8 +47,9 @@ class CRterm:
         yield self
 
     def crdigest(self):
+        if self.digests is not None:
+            return self.digests[0]
         
-        # do not cache CRnum digests... probably not worth it
         if isinstance(self.cr, CRnum):
             h = PROTOCOL(digest_size=16)
             h.update(b"CRnum|")
@@ -50,9 +57,7 @@ class CRterm:
             self.digests = [h.digest()]
             return self.digests[0]
         
-        if self.digests is not None:
-            return self.digests[0]
-        
+
         h = PROTOCOL(digest_size=16)
         h.update(type(self.cr).__name__.encode())
         # compute suffix hash
@@ -63,6 +68,7 @@ class CRterm:
         return self.digests[0]
     
     def cse(self):
+        print('started cse')
         id_map = {}
         memo = {}
 
@@ -73,7 +79,7 @@ class CRterm:
             node.crdigest()
             for i in range(len(node.digests)-1):
                 suffix = node.digests[i]
-                if suffix not in id_map:
+                if suffix not in memo:
                     node_id = len(id_map)
                     id_map[node_id] = (node, i)
                     memo[suffix] = node_id
@@ -81,9 +87,31 @@ class CRterm:
                     original,p = id_map[memo[suffix]]
                     # write the p-th index of original into node's i-th index.
                     original.update.append((p,node,i))
+                    self.length -= len(original.cr)
                     break
     
-    def codegen(self):
-        pass
+    def update_depndencies(self):
+        for term in self.postorder():
+            if isinstance(term.cr, CRnum):
+                continue
+            for child in term.terms:
+                term.dependencies |= child.dependencies
+        
+    def partition_order(self,bucket_number):
+        buckets = [[] for _ in range(bucket_number)]
+        for term in self.postorder():
+            if isinstance(term.cr, CRnum):
+                continue
+
+            for dep in term.dependencies:
+                buckets[dep].append(term)
+        return buckets
+    
+
+
+
+        
+
+
 
    

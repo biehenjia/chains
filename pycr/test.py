@@ -1,14 +1,15 @@
-import api, engine, core
+import engine, core, codegen, api
 
-expr = 'exp(2*x+1)+2*x+1'
-s, symbol_table = api.parse_string(expr)
-cr = engine.crmake(s, symbol_table)
-print(cr)
-temp = core.CRnum(5)
-temp *= cr
-term = engine.CRterm(temp, (None, None))
-tape = term.produce_tape()
-print(tape)
+def test_cr(expr_str, symbol_table):
+    expr, symbol_table = api.parse_string(expr_str)
+    cr = engine.crmake(expr, symbol_table)
 
-term.cse()
+    crterm = engine.CRterm(cr, symbol_table)
+    buckets = crterm.partition_order(1)
+    tape = crterm.produce_tape()
+    code = codegen.generate_code([10], buckets, register_symbol='r')
+    f = codegen.build([], code)
+    return cr, code
 
+expr = "x**2+3*x"
+cr, code = test_cr(expr, {})

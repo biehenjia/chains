@@ -1,5 +1,5 @@
 
-
+# TODO: use sympy opType
 ADD = 'ADD'
 MUL = 'MUL'
 POW = 'POW'
@@ -80,7 +80,7 @@ class Algebra:
         return fn(l,r)
     
     
-
+# will i need these one day...?
 CRbigint = Algebra()
 CRfloat = Algebra()
 CRalgebra = Algebra()
