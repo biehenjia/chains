@@ -1,6 +1,8 @@
 from .dsl import *
 from ..core import *
 
+from ast import *
+
 # CHANGE TO ACCEPT JUst AN ARRAY. WE KNOW THE OPERATION.
 def generate_shift(term, register_symbol='r'):
     if isinstance(term.cr, CRnum):
@@ -32,7 +34,42 @@ def generate_shift(term, register_symbol='r'):
         return block
     
     elif isinstance(term.cr, CRtrig):
-        pass
+        block = []
+        n = len(term.cr)
+        t = n // 2
+
+        for i in range(t - 1):
+            a   = S(f"{register_symbol}_{term.start + i}")
+            b   = S(f"{register_symbol}_{term.start + t + i}")
+            ap1 = L(f"{register_symbol}_{term.start + i + 1}")
+            bp1 = L(f"{register_symbol}_{term.start + t + i + 1}")
+
+            # a = a*bp1 + b*ap1
+            block.append(
+                Assign(
+                    [a],
+                    BinOp(
+                        BinOp(L(a.id), ast.Mult(), bp1),
+                        ast.Add(),
+                        BinOp(L(b.id), ast.Mult(), ap1),
+                    ),
+                )
+            )
+
+            # b = b*bp1 - a_old*ap1
+            block.append(
+                Assign(
+                    [b],
+                    BinOp(
+                        BinOp(L(b.id), ast.Mult(), bp1),
+                        ast.Sub(),
+                        BinOp(L(a.id), ast.Mult(), ap1),
+                    ),
+                )
+            )
+
+        return block
+
 
     # serve no other purpose than to lift child emitters
     elif isinstance(term.cr, CRE):
@@ -53,13 +90,14 @@ def generate_code(bounds, terms_per_order, register_symbol='r'):
 
     
 
-def generate_update(term, register_symbol='r'):
-    block = []
-    for source, parent, index in term.update:
-        block.append(
-            Assign(
-                IndexS(S(f"{register_symbol}_{parent.start + index}"), C(0) ),
-                IndexL(S(f"{register_symbol}_{source}"), C(0) )
-        ))
-    return block
+def generate_update(term, register_symbol="r"):
+
+    return [
+        Assign(
+            S(f"{register_symbol}_{parent.start + index}"),
+            L(f"{register_symbol}_{source}"),
+        )
+        for source, parent, index in term.update
+    ]
+
 
