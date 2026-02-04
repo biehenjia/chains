@@ -1,4 +1,4 @@
-from core import *
+from ..core import *
 import hashlib
 from sympy import srepr
 

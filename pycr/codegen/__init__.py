@@ -1,7 +1,7 @@
 from .dsl import *
 from .shiftcode import *
 
-__all__ = ['generate_codeblock', 
-           'generate_updateblock',
+__all__ = ['generate_code', 
+           'generate_update',
            'build',
-           'generate_code']
+           ]

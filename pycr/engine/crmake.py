@@ -1,6 +1,6 @@
 # here we accept sympy AST
 import sympy
-from core import *
+from ..core import *
 
 def crmake(ASTnode, symbol_table):
 

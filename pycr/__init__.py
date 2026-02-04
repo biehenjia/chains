@@ -4,8 +4,8 @@ from .core import *
 from .engine import * 
 
 def chainify(expr_string):
-    expr_symbolic, symbol_table = api.parse_string(expr_string)
-    cr = engine.crmake(expr_symbolic,symbol_table)
+    expr_symbolic, symbol_table = parse_string(expr_string)
+    cr = crmake(expr_symbolic,symbol_table)
     return cr, symbol_table
 
 

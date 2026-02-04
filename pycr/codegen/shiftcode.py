@@ -1,5 +1,5 @@
 from .dsl import *
-from core import *
+from ..core import *
 
 # CHANGE TO ACCEPT JUst AN ARRAY. WE KNOW THE OPERATION.
 def generate_shift(term, register_symbol='r'):
