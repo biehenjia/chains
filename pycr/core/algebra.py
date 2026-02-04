@@ -64,12 +64,12 @@ class Algebra:
             return fn
         return registrar
     
-    def applyBinary(self, operator, l,r, key):        
+    def applyBinary(self, operator, l,r, key):     
         table = self.bTable.get(operator,{})
         
         fn = table.get(key)
         if fn is None and self.commutesTable.get(operator, False):
-            key = (type(r),type(l))
+            key = key[::-1]
             fn = table.get(key)
             if fn is not None:
                 return fn(r,l)

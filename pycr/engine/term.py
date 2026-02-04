@@ -10,22 +10,27 @@ class CRterm:
 
     def __init__(self, cr, parent):
         self.cr = cr 
-
+        self.digests = []
         if not isinstance(cr, CRnum):
             # hashing is based on subarena
             self.subarena = []
             self.terms = []
-            self.digests = []
             self.dependencies = {cr.order,}
             for i,o in enumerate(cr):
                 self.subarena.append(o.valueof())
                 self.terms.append( CRterm(o, (self,i)) )
+
+    
     
     def cse(self):
-        if not isinstance(self.cr, CRnum):
+        memo = {}
+        id_map = {}
+        for term in self.postorder():
             pass
 
+
     def postorder(self):
+        # 
         if isinstance(self.cr, CRnum):
             return 
         for t in self.terms:
@@ -33,7 +38,7 @@ class CRterm:
         yield self 
             
     def crdigest(self):
-        if self.digests is not None:
+        if self.digests:
             return self.digests[0]
         
         if isinstance(self.cr, CRnum):
@@ -44,7 +49,15 @@ class CRterm:
             return self.digests[0]
         
         elif isinstance(self.cr, CRtrig):
-            pass
+            h = PROTOCOL(digest_size = 16)
+            # all CRtrigs are the same
+            h.update(CRtrig.__name__.encode())
+
+            self.digests = [None] * (len(self.cr)//2)
+            for i in range(len(self.cr)//2):
+                h.update(self.terms[-i-1].crdigest())
+                h.update(self.terms[-i-1 - len(self.cr)//2].crdigest())
+                self.digests[-i-1] = h.digest()
         else:
             h = PROTOCOL(digest_size=16)
             h.update(type(self.cr).__name__.encode())

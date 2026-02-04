@@ -20,6 +20,7 @@ def crmake(ASTnode, symbol_table):
         return result
     
     elif isinstance(ASTnode, sympy.Add):
+        
         result = CRnum(0)
         for arg in ASTnode.args:
             result += crmake(arg, symbol_table)
@@ -32,7 +33,6 @@ def crmake(ASTnode, symbol_table):
         return result
     
     elif isinstance(ASTnode, sympy.Pow):
-        print('here!')
         base = crmake(ASTnode.args[0], symbol_table)
         exponent = crmake(ASTnode.args[1], symbol_table)
         return base ** exponent

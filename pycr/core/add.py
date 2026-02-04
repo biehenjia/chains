@@ -15,6 +15,9 @@ def addCRnumCRnum(l: CRnum, r: CRnum):
 
 @CRalgebra.defineBinary(ADD, CRsum, CRnum, commutative=True)
 def addCRsumCRnum(l: CRsum, r: CRnum):
+    # print('hello')
+    # print(l)
+    # print(r)
     result = l.copy()
     result[0] += r
     return result

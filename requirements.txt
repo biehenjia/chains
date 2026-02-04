@@ -1,0 +1,5 @@
+mpmath
+sympy
+
+numpy
+uv-build
