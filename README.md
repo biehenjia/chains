@@ -3,8 +3,15 @@ chains of recurrences engine in python
 
 # installation
 
-## manual
+## pip
+```bash
+pip install git+https://github.com/biehenjia/chains
+```
 
+## manual
+```bash
+git clone https://github.com/biehenjia/chains
+```
 
 # examples
 ```python
