@@ -91,13 +91,42 @@ def generate_code(bounds, terms_per_order, register_symbol='r'):
     
 
 def generate_update(term, register_symbol="r"):
-
-    return [
-        Assign(
-            S(f"{register_symbol}_{parent.start + index}"),
-            L(f"{register_symbol}_{source}"),
-        )
-        for source, parent, index in term.update
-    ]
+    if isinstance(term.cr, CRE):
+        if isinstance(CREadd):
+            return [
+                Assign(
+                    S(f"{register_symbol}_{parent.start + index}"),
+                    Add(L(f"{register_symbol}_{term.cr.start}"), L(f"{register_symbol}_{term.cr.start+1}") )
+                )
+                for source, parent, index in term.update
+            ]
+        elif isinstance(CREmul):
+            return [
+                Assign(
+                    S(f"{register_symbol}_{parent.start + index}"),
+                    Mul(L(f"{register_symbol}_{term.cr.start}"), L(f"{register_symbol}_{term.cr.start+1}") )
+                )
+                for source, parent, index in term.update
+            ]
+        elif isinstance(CREsin):
+            return [
+                Assign(
+                    S(f"{register_symbol}_{parent.start + index}"),
+                    
+                )
+                for source, parent, index in term.update
+            ]
+        elif isinstance(CREcos):
+            pass
+        elif isinstance():
+            pass
+    else:
+        return [
+            Assign(
+                S(f"{register_symbol}_{parent.start + index}"),
+                L(f"{register_symbol}_{source}"),
+            )
+            for source, parent, index in term.update
+        ]
 
 

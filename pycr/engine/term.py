@@ -50,7 +50,7 @@ class CRterm:
         
         elif isinstance(self.cr, CRtrig):
             h = PROTOCOL(digest_size = 16)
-            # all CRtrigs are the same
+            # all CRtrigs have the same operands
             h.update(CRtrig.__name__.encode())
 
             self.digests = [None] * (len(self.cr)//2)
