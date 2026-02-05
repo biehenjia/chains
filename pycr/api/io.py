@@ -2,7 +2,7 @@ import sympy
 
 # TODO: error reduction
 
-def parse_string(s,error_reduction = 0):
+def parse_string(s,symbol_table = {}, error_reduction = 0):
     expr = sympy.parsing.sympy_parser.parse_expr(s)
     if error_reduction:
         # we break x into roughly error_reduction pieces
@@ -13,9 +13,9 @@ def parse_string(s,error_reduction = 0):
     
     symbols = expr.free_symbols
     # create auxiliary symbols representing start step
-    symbol_table = {}
     for symbol in symbols:
-        symbol_table[symbol] = {'order': len(symbol_table), 'params': (sympy.Symbol(f'{symbol}_0'), sympy.Symbol(f'{symbol}_h'))}    
+        if not symbol in symbol_table:
+            symbol_table[symbol] = {'order': len(symbol_table), 'params': (sympy.Symbol(f'{symbol}_0'), sympy.Symbol(f'{symbol}_h'))}    
     return expr,symbol_table
 
 

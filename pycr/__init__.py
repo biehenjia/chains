@@ -10,4 +10,5 @@ def chainify(expr_string):
 
 
 
-__all__ = ['chainify']
+__all__ = ['chainify', 'CRnum']
+
