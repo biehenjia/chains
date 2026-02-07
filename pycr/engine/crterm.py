@@ -120,4 +120,9 @@ class CRterm:
 
                     memo[digest] = (c, i)
 
+        def partition_order(self, symbol_table):
+            
+            for c in self.postorder():
+                pass
+
 
