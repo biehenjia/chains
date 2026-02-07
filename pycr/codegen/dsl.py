@@ -72,3 +72,26 @@ def set_at(arr_name, idx_expr, value_expr):
         value=value_expr
     )
 
+if __name__ == "__main__":
+    # def fill(out, n):
+    #   for k in range(0, n):
+    #     out[k] = sin(k) + exp(k)
+    #   return None
+
+    k = v("k")
+    fill = fn("fill", ["out", "n"], [
+        for_range("k", v("n"), [
+            set_at("out", k, add(sin(k), exp(k)))
+        ]),
+        ret(c(None)),
+    ])
+
+    m = mod(fill)
+    print(ast.unparse(m))
+
+    ns = {}
+    exec(compile(m, "<dsl>", "exec"), ns, ns)
+
+    out = [0.0] * 5
+    ns["fill"](out, 5)
+    print(out)

@@ -46,12 +46,14 @@ class CRterm:
         self.digests = []
         if not isinstance(self.cr, CRnum):
             self.trunc = 0
+            # base update spot
             self.operands = []
             self.updates = []
             for i in range(len(self.cr)):
                 self.operands.append(CRterm(self.cr[i]))
-                if not isinstance(self.cr[i], CRnum):
-                    self.updates.append((self.cr[i],i))
+                # DONT DO UPDATES UNTIL AFTER CSE. THEN, WE CAN DO LAST INDEX AS THE WRITE REGISTER.
+                # if not isinstance(self.cr[i], CRnum):
+                #     self.updates.append((-1, self.operands[i],i))
 
 
     def postorder(self):
