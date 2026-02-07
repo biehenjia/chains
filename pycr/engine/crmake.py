@@ -20,16 +20,17 @@ def crmake(ASTnode, symbol_table):
         return result
     
     elif isinstance(ASTnode, sympy.Add):
-        
-        result = CRnum(0)
-        for arg in ASTnode.args:
-            result += crmake(arg, symbol_table)
+        arglist = ASTnode.args
+        result  = crmake(arglist[0],symbol_table)
+        for i in range(1,len(arglist)):
+            result += crmake(arglist[i], symbol_table)
         return result
     
     elif isinstance(ASTnode, sympy.Mul):
-        result = CRnum(1)
-        for arg in ASTnode.args:
-            result *= crmake(arg, symbol_table)
+        arglist = ASTnode.args
+        result = crmake(arglist[0],symbol_table)
+        for i in range(1,len(arglist)):
+            result *= crmake(arglist[i], symbol_table)
         return result
     
     elif isinstance(ASTnode, sympy.Pow):

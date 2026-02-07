@@ -20,8 +20,6 @@ class CRterm:
                 self.subarena.append(o.valueof())
                 self.terms.append( CRterm(o, (self,i)) )
 
-    
-    
     def cse(self):
         memo = {}
         id_map = {}
@@ -85,5 +83,4 @@ class CRterm:
             for dep in term.dependencies:
                 buckets[dep].append(term)
         return buckets
-    
     

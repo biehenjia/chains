@@ -3,6 +3,7 @@
 # we construct the CR tree, 
 
 from .crmake import *
-from .term import *
+from .crterm import *
 
-__all__ = ['crmake', 'CRterm']
+__all__ = ['crmake']
+

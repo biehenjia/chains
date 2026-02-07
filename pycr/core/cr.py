@@ -1,8 +1,8 @@
-import sympy, types
+import sympy, types, hashlib
 from .algebra import *
 
 CRalgebra = Algebra()
-
+PROTOCOL = hashlib.blake2b
 '''
 Supported operations:
 ADD, MUL, POW
@@ -18,6 +18,7 @@ class CR:
         self.order = order
         self.length = length
         self.operands = [None]*length
+        
     
     def __len__(self):
         return len(self.operands)
@@ -100,6 +101,8 @@ class CR:
     
     
     
+    
+    
 
 class CRnum(CR):
     # can be numeric: rational, expression, symbolic
@@ -144,6 +147,8 @@ class CRnum(CR):
     def walk_str(self, prefix="", terminal=True):
         return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
 
+    
+
 class CRsum(CR):
     def simplify(self):
         result = self.copy()
@@ -156,6 +161,8 @@ class CRsum(CR):
             return CRnum(0)
         else:
             return result
+    
+    
 
 class CRprod(CR):
     def simplify(self):
