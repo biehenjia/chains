@@ -66,3 +66,9 @@ def mod(*items):
 
 
 
+def set_at(arr_name, idx_expr, value_expr):
+    return ast.Assign(
+        targets=[ast.Subscript(value=v(arr_name), slice=idx_expr, ctx=ast.Store())],
+        value=value_expr
+    )
+
