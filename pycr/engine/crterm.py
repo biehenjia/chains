@@ -35,6 +35,8 @@ Computation graph of CRterm
         2.  
 '''
 from ..core import *
+from ..codegen import *
+
 import hashlib
 from sympy import srepr
 
@@ -44,6 +46,8 @@ class CRterm:
     def __init__(self, cr):
         self.cr = cr
         self.digests = []
+        self.trunc = len(cr)
+        self.dependencies = {cr.order,}
         if not isinstance(self.cr, CRnum):
             self.trunc = 0
             # base update spot
@@ -113,18 +117,39 @@ class CRterm:
             c.crdigest()
             for i,digest in enumerate(c.digests):
                 if digest in memo:
-                    print('found!')
                     source, index = memo[digest]
                     c.updates.append((source, index))
                     c.trunc = min(c.trunc, i)
-
                 else:
-
                     memo[digest] = (c, i)
 
-        def partition_order(self, symbol_table):
-            
-            for c in self.postorder():
-                pass
+    def partition_order(self, symbol_table):
+        orders = [[] for i in range(len(symbol_table))]
+        for c in self.postorder():
+            for d in c.dependencies:
+                if d >= 0:
+                    orders[d].append(c)
+        return orders
+    
+    # this will be the preparation code generation place
+    # we will try and produce the tape, and also update the things that we need such as update indices 
+    def prepare(self, symbol_table, cse = True):
+        if cse:
+            self.cse() # optional
+        self.propogate_dependencies()
+
+        self.partition_order(symbol_table)
+
+    
+    def produce_tape(self):
+        s = self.postorder()
+        tape = []
+        for c in s:
+            c.start = len(tape)
+            for i in range(c.trunc):
+                
+
+
+        
 
 
