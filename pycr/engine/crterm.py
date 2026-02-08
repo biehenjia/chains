@@ -137,9 +137,7 @@ class CRterm:
         if cse:
             self.cse() # optional
         self.propogate_dependencies()
-
         self.partition_order(symbol_table)
-
     
     def produce_tape(self):
         s = self.postorder()
@@ -148,8 +146,3 @@ class CRterm:
             c.start = len(tape)
             for i in range(c.trunc):
                 
-
-
-        
-
-
