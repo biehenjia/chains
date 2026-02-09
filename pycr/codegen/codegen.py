@@ -189,5 +189,30 @@ def gen_update(crterm, register_symbol = "r"):
     return block
 
 
-def gen_nested(blocks, bounds):
-    pass
+def gen_nested(blocks, bounds, idx_prefix="_i"):
+    idx_names = [f"{idx_prefix}{d}" for d in range(len(bounds))]
+    body = blocks[-1]
+
+    for depth in reversed(range(len(bounds))):
+        bound = bounds[depth]
+        if isinstance(bound, int):
+            bound = c(bound)
+        body = [for_range(store(idx_names[depth]), bound, body)]
+        if depth > 0:
+            body = blocks[depth - 1] + body
+
+    return (body)
+
+def flatten(blocks):
+    out = []
+    for b in blocks:
+        out.extend(b)
+    return out
+
+def stitch(stmts, fn_name="generated", args=()):
+    f = fn(fn_name, list(args), stmts)
+    m = mod(f)
+    return m
+
+
+
