@@ -1,3 +1,5 @@
+from codegen import *
+
 '''
 PURPOSE OF CRTERM:
 
@@ -139,10 +141,28 @@ class CRterm:
         self.propogate_dependencies()
         self.partition_order(symbol_table)
     
+    # produces and also assigns the starts and mids of the crterm
     def produce_tape(self):
         s = self.postorder()
         tape = []
         for c in s:
             c.start = len(tape)
+            c.mid = len(tape) + len(c.cr)//2
             for i in range(c.trunc):
+                tape.append(c.operands[i].valueof())
+            tape.append(0) # update index
+        return tape
+    
+    def codegen(self, symbol_table):
+        orders = self.partition_order(symbol_table)
+        blocks = []
+        for order in orders:
+            blocks.append([])
+            for instruction in order:
+                temp_block = [gen_fetch(instruction), gen_shift(instruction), gen_update(instruction)]
+                blocks[-1].append(temp_block)
+        # returns AST object that compiles the generated code
+        return gen_nested(blocks)
+        
                 
+    
