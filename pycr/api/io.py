@@ -1,5 +1,7 @@
 import sympy
 
+sympy.parsing 
+
 # TODO: error reduction
 
 def parse_string(s,symbol_table = {}, error_reduction = 0):
