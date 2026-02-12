@@ -181,18 +181,6 @@ def seed_stmt_locations(tree, lineno=1, col=0):
             n.end_lineno = getattr(n, "lineno", lineno)
             n.end_col_offset = getattr(n, "col_offset", col)
 
-
-def _sym_name(s): 
-    return getattr(s, "name", str(s))
-
-def _sym_sort_key(n):
-    try:
-        a, b = n.rsplit("_", 1)
-        return (a, int(b))
-    except Exception:
-        return (n, 0)
-
-
 def sympy_to_astexpr(e):
     return ast.parse(str(e), mode="eval").body
 
