@@ -89,13 +89,30 @@ def aug_mult(target: ast.expr, value: ast.expr):
     return ast.AugAssign(target, ast.Mult(), value)
 
 
+def _flatten_stmts(xs):
+    out = []
+    for x in xs:
+        if x is None:
+            continue
+        if isinstance(x, list):
+            out.extend(_flatten_stmts(x))
+        else:
+            out.append(x)
+    return out
+
+
 def for_range(i_target: ast.expr, stop: ast.expr, body):
+    body = _flatten_stmts(body)
+    if not body:
+        body = [ast.Pass()]
+
     return ast.For(
         target=i_target,
         iter=ast.Call(load("range"), [c(0), stop], []),
         body=body,
         orelse=[],
     )
+
 
 
 def while_(test, body):
@@ -125,9 +142,17 @@ def fn(name_s: str, args, body):
 
 
 def mod(*items):
-    m = ast.Module([ast.Import([ast.alias("math", None)]), *items], [])
+    m = ast.Module(
+        [
+            ast.Import([ast.alias("math", None)]),
+            ast.ImportFrom("math", [ast.alias("*", None)], 0),
+            *items,
+        ],
+        [],
+    )
     ast.fix_missing_locations(m)
     return m
+
 
 
 def subscript(value_expr: ast.expr, idx_expr: ast.expr, ctx):
@@ -135,5 +160,6 @@ def subscript(value_expr: ast.expr, idx_expr: ast.expr, ctx):
 
 
 def set_at(arr_expr: ast.expr, idx_expr: ast.expr, value_expr: ast.expr):
-
     return assign(subscript(arr_expr, idx_expr, ast.Store()), value_expr)
+
+

@@ -5,5 +5,5 @@
 from .crmake import *
 from .crterm import *
 
-__all__ = ['crmake']
+__all__ = ['crmake', 'CRterm']
 

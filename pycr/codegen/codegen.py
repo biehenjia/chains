@@ -1,5 +1,6 @@
 from ..core import *
 from .dsl import *
+import sympy
 
 
 def _r(register_symbol, idx):
@@ -88,7 +89,7 @@ def gen_shift(crterm, register_symbol="r"):
 def gen_update(crterm, register_symbol="r"):
     block = []
 
-    update_idx = crterm.start + crterm.update_index
+    update_idx = crterm.update_index
     start_idx = crterm.start
     second_idx = crterm.start + 1
     mid_idx = crterm.mid
@@ -138,29 +139,83 @@ def gen_update(crterm, register_symbol="r"):
     return block
 
 
-def gen_nested(blocks, bounds, idx_prefix="_i"):
-    idx_names = [f"{idx_prefix}{d}" for d in range(len(bounds))]
-    body = blocks[-1]
+def gen_nested(blocks, symbol_table, out_name, n_registers, register_symbol="r", idx_prefix="_i"):
+    syms = list(symbol_table.keys())
+    idx_names = [f"{idx_prefix}{d}" for d in range(len(syms))]
 
-    for depth in reversed(range(len(bounds))):
-        bound = bounds[depth]
-        if isinstance(bound, int):
-            bound = c(bound)
+    val = load(f"{register_symbol}{n_registers - 1}")
+
+    inner = flatten(blocks[-1]) + [set_nd(out_name, idx_names, val)]
+
+    body = inner
+    for depth in reversed(range(len(syms))):
+        name = getattr(syms[depth], "name", str(syms[depth]))
+        bound = load(f"{name}_b")
+
+        body = flatten(body)
         body = [for_range(store(idx_names[depth]), bound, body)]
         if depth > 0:
             body = blocks[depth - 1] + body
 
-    return body
+    return flatten(body)
+
 
 
 def flatten(blocks):
     out = []
-    for b in blocks:
-        out.extend(b)
+    for x in blocks:
+        if isinstance(x, list):
+            out.extend(flatten(x))
+        else:
+            out.append(x)
     return out
 
 
-def stitch(stmts, fn_name="generated", args=()):
-    f = fn(fn_name, list(args), stmts)
+def seed_stmt_locations(tree, lineno=1, col=0):
+    for n in ast.walk(tree):
+        attrs = getattr(n, "_attributes", ())
+        if "lineno" in attrs and not hasattr(n, "lineno"):
+            n.lineno = lineno
+            n.col_offset = col
+        if "end_lineno" in attrs and not hasattr(n, "end_lineno"):
+            n.end_lineno = getattr(n, "lineno", lineno)
+            n.end_col_offset = getattr(n, "col_offset", col)
+
+
+def _sym_name(s): 
+    return getattr(s, "name", str(s))
+
+def _sym_sort_key(n):
+    try:
+        a, b = n.rsplit("_", 1)
+        return (a, int(b))
+    except Exception:
+        return (n, 0)
+
+
+def sympy_to_astexpr(e):
+    return ast.parse(str(e), mode="eval").body
+
+def stitch(stmts, fn_name="generated", symtab=None, tape=(), register_symbol="r", out_name="out"):
+    symtab = symtab or {}
+
+    args = [out_name]
+    for s in symtab.keys():
+        n = getattr(s, "name", str(s))
+        args += [f"{n}_0", f"{n}_h", f"{n}_b"]
+
+    pre = [assign(store(f"{register_symbol}{k}"), sympy_to_astexpr(e)) for k, e in enumerate(tape)]
+    stmts = flatten(stmts)
+
+    f = fn(fn_name, args, pre + stmts)
     m = mod(f)
+    seed_stmt_locations(m)
+    ast.fix_missing_locations(m)
     return m
+
+def set_nd(out_name, idx_names, value_expr):
+    t = load(out_name)
+    for d in range(len(idx_names) - 1):
+        t = subscript(t, load(idx_names[d]), ast.Load())
+    tgt = subscript(t, load(idx_names[-1]), ast.Store())
+    return assign(tgt, value_expr)

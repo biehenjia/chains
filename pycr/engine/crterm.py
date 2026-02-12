@@ -1,4 +1,3 @@
-from codegen import *
 
 '''
 PURPOSE OF CRTERM:
@@ -51,7 +50,7 @@ class CRterm:
         self.trunc = len(cr)
         self.dependencies = {cr.order,}
         if not isinstance(self.cr, CRnum):
-            self.trunc = 0
+            self.trunc = len(self.cr)
             # base update spot
             self.operands = []
             self.updates = []
@@ -140,6 +139,8 @@ class CRterm:
             self.cse() # optional
         self.propogate_dependencies()
         self.partition_order(symbol_table)
+        tape = self.produce_tape()
+        return tape
     
     # produces and also assigns the starts and mids of the crterm
     def produce_tape(self):
@@ -149,11 +150,12 @@ class CRterm:
             c.start = len(tape)
             c.mid = len(tape) + len(c.cr)//2
             for i in range(c.trunc):
-                tape.append(c.operands[i].valueof())
+                tape.append(c.cr.operands[i].valueof())
+            c.update_index = len(tape)
             tape.append(0) # update index
         return tape
     
-    def codegen(self, symbol_table):
+    def codegen(self, symbol_table, out_name, tape):
         orders = self.partition_order(symbol_table)
         blocks = []
         for order in orders:
@@ -162,7 +164,8 @@ class CRterm:
                 temp_block = [gen_fetch(instruction), gen_shift(instruction), gen_update(instruction)]
                 blocks[-1].append(temp_block)
         # returns AST object that compiles the generated code
-        return gen_nested(blocks)
+        return gen_nested(blocks, symbol_table,out_name=out_name, n_registers=len(tape))
+
         
     
     
