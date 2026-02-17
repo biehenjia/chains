@@ -49,16 +49,16 @@ class CRterm:
         self.digests = []
         self.trunc = len(cr)
         self.dependencies = {cr.order,}
+        self.operands = []
+        self.updates = []
         if not isinstance(self.cr, CRnum):
             self.trunc = len(self.cr)
             # base update spot
-            self.operands = []
-            self.updates = []
+            
             for i in range(len(self.cr)):
                 self.operands.append(CRterm(self.cr[i]))
+                
                 # DONT DO UPDATES UNTIL AFTER CSE. THEN, WE CAN DO LAST INDEX AS THE WRITE REGISTER.
-                # if not isinstance(self.cr[i], CRnum):
-                #     self.updates.append((-1, self.operands[i],i))
 
 
     def postorder(self):
@@ -151,9 +151,13 @@ class CRterm:
             c.start = len(tape)
             c.mid = len(tape) + len(c.cr)//2
             for i in range(c.trunc):
+
                 tape.append(c.cr.operands[i].valueof())
+                if not isinstance(c.cr.operands[i], CRnum):
+                    self.updates.append((len(tape)-1, c.operands[i], c.operands[i].start +c.operands[i].trunc ))
             c.update_index = len(tape)
-            tape.append(0) # update index
+            tape.append(c.cr.valueof())
+        print(tape)
         return tape
     
     def codegen(self, symbol_table, out_name, tape):
@@ -170,3 +174,5 @@ class CRterm:
                 blocks[-1].append(temp_block)
         # returns AST object that compiles the generated code
         return gen_nested(blocks, symbol_table,out_name=out_name, n_registers=len(tape))
+    
+    

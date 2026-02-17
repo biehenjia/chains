@@ -21,7 +21,7 @@ def gen_fetch(crterm, register_symbol="r"):
         location = source.start + read
         block.append(
             assign(
-                rstore(register_symbol, read),
+                rstore(register_symbol, write),
                 rload(register_symbol, location),
             )
         )
@@ -145,7 +145,7 @@ def gen_nested(blocks, symbol_table, out_name, n_registers, register_symbol="r",
 
     val = load(f"{register_symbol}{n_registers - 1}")
 
-    inner = flatten(blocks[-1]) + [set_nd(out_name, idx_names, val)]
+    inner = [set_nd(out_name, idx_names, val)]+flatten(blocks[-1]) 
 
     body = inner
     for depth in reversed(range(len(syms))):

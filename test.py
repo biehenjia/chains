@@ -4,8 +4,8 @@ import math
 import time 
 expr = "sin(x**2)+4"
 
-# other, symbol_table = pycr.chainify(expr)
-# print(other)
+other, symbol_table = pycr.chainify(expr)
+print(other)
 
 stuff = pycr.chain_ast(expr)
 print(ast.unparse(stuff))
@@ -14,7 +14,6 @@ a = [0] * 10
 
 f(a, 0,1, 10)
 
-print(a)
 
 
 # issue: tower type cr, i.e., CRE class of objects

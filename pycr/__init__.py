@@ -12,7 +12,10 @@ def chain_ast(expr_string):
     cr, symbol_table = chainify(expr_string)
     crt = CRterm(cr)
     tape = crt.prepare(symbol_table)
+    for thing in crt.postorder():
+        print(thing.updates)
     
+
     statements = crt.codegen(symbol_table, out_name = "R", tape = tape)
     return stitch(statements,symtab=symbol_table,tape=tape, out_name="R")
 

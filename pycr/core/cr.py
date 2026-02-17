@@ -101,10 +101,6 @@ class CR:
         return self[0].valueof()
     
     
-    
-    
-    
-
 class CRnum(CR):
     # can be numeric: rational, expression, symbolic
     # only case when symbolic is during variable injection
@@ -227,17 +223,25 @@ class CRE(CR):
         self.order = max(l.order, r.order)
 
 class CREadd(CRE):
-    pass
+    
+    def valueof(self):
+        return self.operands[0].valueof() + self.operands[1].valueof()
 
 class CREmul(CRE): 
-    pass
+    
+    def valueof(self):
+        return self.operands[0].valueof() * self.operands[1].valueof()
 
 class CRElog(CRE):
-    pass
+    
+    def valueof(self):
+        return log(self.operands[0].valueof(),self.operands[1].valueof())
 
 class CREpow(CRE): 
     # TODO: fix
-    pass 
+    
+    def valueof(self):
+        return self.operands[0].valueof() ** self.operands[1].valueof()
     
 class CREtrig(CRE):
     
@@ -246,17 +250,25 @@ class CREtrig(CRE):
         self.order = l.order
 
 class CREsin(CREtrig):
-    pass 
+    
+    def valueof(self):
+        return sin(self.operands[0])
 
 class CREcos(CREtrig):
-    pass 
+    
+    def valueof(self):
+        return cos(self.operands[0])
 
 class CREtan(CREtrig):
-    pass
+    
+    def valueof(self):
+        return tan(self.operands[0])
 
 
 class CREcot(CREtrig):
-    pass
+    
+    def valueof(self):
+        return cot(self.operands[0])
 
 def sin(arg):
     if isinstance(arg, sympy.Expr):
