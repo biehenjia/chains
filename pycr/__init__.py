@@ -12,10 +12,16 @@ def chain_ast(expr_string):
     cr, symbol_table = chainify(expr_string)
     crt = CRterm(cr)
     tape = crt.prepare(symbol_table)
+    
     statements = crt.codegen(symbol_table, out_name = "R", tape = tape)
     return stitch(statements,symtab=symbol_table,tape=tape, out_name="R")
 
+def compile_ast(cr_ast):
+    namespace = {}
+    code = compile(cr_ast, filename="<ast>", mode="exec")
+    exec(code,namespace)
+    return namespace["generated"]
 
 
-__all__ = ['chainify', 'CRnum', 'chain_ast']
+__all__ = ['chainify', 'CRnum', 'chain_ast', 'compile_ast']
 

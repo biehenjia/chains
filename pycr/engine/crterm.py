@@ -116,10 +116,11 @@ class CRterm:
             if isinstance(c.cr, CRnum):
                 continue
             c.crdigest()
-            for i,digest in enumerate(c.digests):
+            for i in range(1,len(c.digests)):
+                digest = c.digests[i]
                 if digest in memo:
                     source, index = memo[digest]
-                    c.updates.append((source, index))
+                    c.updates.append((i, source, index))
                     c.trunc = min(c.trunc, i)
                 else:
                     memo[digest] = (c, i)
@@ -157,6 +158,10 @@ class CRterm:
     
     def codegen(self, symbol_table, out_name, tape):
         orders = self.partition_order(symbol_table)
+        
+        for order in orders:
+            for term in order:
+                print(type(term.cr), term.trunc)
         blocks = []
         for order in orders:
             blocks.append([])
@@ -165,7 +170,3 @@ class CRterm:
                 blocks[-1].append(temp_block)
         # returns AST object that compiles the generated code
         return gen_nested(blocks, symbol_table,out_name=out_name, n_registers=len(tape))
-
-        
-    
-    

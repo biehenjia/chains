@@ -159,8 +159,6 @@ def gen_nested(blocks, symbol_table, out_name, n_registers, register_symbol="r",
 
     return flatten(body)
 
-
-
 def flatten(blocks):
     out = []
     for x in blocks:

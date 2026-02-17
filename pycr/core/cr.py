@@ -3,6 +3,7 @@ from .algebra import *
 
 CRalgebra = Algebra()
 PROTOCOL = hashlib.blake2b
+
 '''
 Supported operations:
 ADD, MUL, POW

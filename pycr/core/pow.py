@@ -15,7 +15,6 @@ CRsum ^ CRnum (non-integer): not done
 CRtrig ^ CRnum
 '''
 
-
 @CRalgebra.defineBinary(POW, CRnum, CRnum)
 def powCRnumCRnum(l: CRnum, r: CRnum):
     return CRnum(l.valueof() ** r.valueof())

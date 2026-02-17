@@ -144,7 +144,6 @@ def fn(name_s: str, args, body):
 def mod(*items):
     m = ast.Module(
         [
-            ast.Import([ast.alias("math", None)]),
             ast.ImportFrom("math", [ast.alias("*", None)], 0),
             *items,
         ],
