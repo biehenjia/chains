@@ -15,7 +15,6 @@ def chain_ast(expr_string):
     for thing in crt.postorder():
         print(thing.updates)
     
-
     statements = crt.codegen(symbol_table, out_name = "R", tape = tape)
     return stitch(statements,symtab=symbol_table,tape=tape, out_name="R")
 
@@ -27,4 +26,3 @@ def compile_ast(cr_ast):
 
 
 __all__ = ['chainify', 'CRnum', 'chain_ast', 'compile_ast']
-

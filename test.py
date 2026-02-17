@@ -2,7 +2,7 @@ import pycr
 import ast
 import math
 import time 
-expr = "sin(x**2)+4"
+expr = "sin(x**2)+2**sin(x**2)"
 
 other, symbol_table = pycr.chainify(expr)
 print(other)
@@ -13,7 +13,6 @@ f = pycr.compile_ast(stuff)
 a = [0] * 10
 
 f(a, 0,1, 10)
-
 
 
 # issue: tower type cr, i.e., CRE class of objects

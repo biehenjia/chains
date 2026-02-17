@@ -20,7 +20,6 @@ class CR:
         self.length = length
         self.operands = [None]*length
         
-    
     def __len__(self):
         return len(self.operands)
     

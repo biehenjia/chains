@@ -27,7 +27,7 @@ def gen_fetch(crterm, register_symbol="r"):
         )
     return block
 
-
+# TODO: MAKE IN TERMS OF TRUNC, INSTEAD OF CR LENGTH
 def gen_shift(crterm, register_symbol="r"):
     block = []
 

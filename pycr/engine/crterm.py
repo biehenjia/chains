@@ -157,7 +157,6 @@ class CRterm:
                     self.updates.append((len(tape)-1, c.operands[i], c.operands[i].start +c.operands[i].trunc ))
             c.update_index = len(tape)
             tape.append(c.cr.valueof())
-        print(tape)
         return tape
     
     def codegen(self, symbol_table, out_name, tape):
@@ -174,5 +173,3 @@ class CRterm:
                 blocks[-1].append(temp_block)
         # returns AST object that compiles the generated code
         return gen_nested(blocks, symbol_table,out_name=out_name, n_registers=len(tape))
-    
-    
