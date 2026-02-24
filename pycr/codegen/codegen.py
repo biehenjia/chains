@@ -32,7 +32,7 @@ def gen_shift(crterm, register_symbol="r"):
     block = []
 
     if isinstance(crterm.cr, CRtrig):
-        n = len(crterm.cr)
+        n = crterm.trunc
         t = n // 2
 
         for i in range(t - 1):
@@ -65,7 +65,7 @@ def gen_shift(crterm, register_symbol="r"):
             block.append(assign(bS, tmp_bL))
 
     elif isinstance(crterm.cr, CRsum):
-        for i in range(len(crterm.cr) - 1):
+        for i in range(crterm.trunc-1):
             block.append(
                 aug_add(
                     rstore(register_symbol, crterm.start + i),
@@ -74,7 +74,7 @@ def gen_shift(crterm, register_symbol="r"):
             )
 
     elif isinstance(crterm.cr, CRprod):
-        for i in range(len(crterm.cr) - 1):
+        for i in range(crterm.trunc - 1):
             block.append(
                 aug_mult(
                     rstore(register_symbol, crterm.start + i),
