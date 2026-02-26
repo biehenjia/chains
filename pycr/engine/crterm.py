@@ -53,6 +53,7 @@ class CRterm:
         self.updates = []
         if not isinstance(self.cr, CRnum):
             self.trunc = len(self.cr)
+            #print(type(self.cr),len(self .cr))
             # base update spot
             
             for i in range(len(self.cr)):
@@ -154,7 +155,7 @@ class CRterm:
 
                 tape.append(c.cr.operands[i].valueof())
                 if not isinstance(c.cr.operands[i], CRnum):
-                    self.updates.append((len(tape)-1, c.operands[i], c.operands[i].start +c.operands[i].trunc ))
+                    self.updates.append((len(tape)-1, c.operands[i], c.operands[i].trunc ))
             c.update_index = len(tape)
             tape.append(c.cr.valueof())
         return tape
@@ -162,9 +163,9 @@ class CRterm:
     def codegen(self, symbol_table, out_name, tape):
         orders = self.partition_order(symbol_table)
         
-        for order in orders:
-            for term in order:
-                print(type(term.cr), term.trunc)
+        # for order in orders:
+        #     for term in order:
+        #         print(type(term.cr), term.trunc)
         blocks = []
         for order in orders:
             blocks.append([])

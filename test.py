@@ -2,8 +2,7 @@ import pycr
 import ast
 import math
 import time 
-expr = "sin(x**2)+2**sin(x)"
-
+expr = "sin(x)+x**2"
 other, symbol_table = pycr.chainify(expr)
 print(other)
 

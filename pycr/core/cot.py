@@ -16,3 +16,4 @@ def tanCRsum(u):
         result[i+len(u)] = tan(u[i+len(u)])
     return result
 
+

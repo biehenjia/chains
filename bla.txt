@@ -1,1 +1,12 @@
-sin(x_0)sin(x_h)cos(x_0)cos(x_h)sin(x_0)2sin(x_0)2**sin(x_0)sin(x_0**2)sin(x_0*x_h + x_h*(x_0 + x_h))sin(2*x_h**2)cos(x_0**2)cos(x_0*x_h + x_h*(x_0 + x_h))cos(2*x_h**2)sin(x_0**2)2**sin(x_0)sin(x_0**2)2**sin(x_0) + sin(x_0**2)
+x_0**2
+x_0*x_h + x_h*(x_0 + x_h)
+2*x_h**2
+x_0**2
+sin(x_0)
+sin(x_h)
+cos(x_0)
+cos(x_h)
+sin(x_0)
+x_0**2
+sin(x_0)
+x_0**2 + sin(x_0)

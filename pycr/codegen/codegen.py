@@ -18,6 +18,7 @@ def rstore(register_symbol, idx):
 def gen_fetch(crterm, register_symbol="r"):
     block = []
     for write, source, read in crterm.updates:
+        
         location = source.start + read
         block.append(
             assign(
@@ -88,11 +89,13 @@ def gen_shift(crterm, register_symbol="r"):
 # ad-hoc; i dont like this
 def gen_update(crterm, register_symbol="r"):
     block = []
-
+    
     update_idx = crterm.update_index
     start_idx = crterm.start
     second_idx = crterm.start + 1
     mid_idx = crterm.mid
+    print(type(crterm.cr),update_idx, start_idx,second_idx, mid_idx)
+    print(crterm.updates)
 
     updateR_L = rload(register_symbol, update_idx)
     updateR_S = rstore(register_symbol, update_idx)
@@ -205,3 +208,7 @@ def set_nd(out_name, idx_names, value_expr):
         t = subscript(t, load(idx_names[d]), ast.Load())
     tgt = subscript(t, load(idx_names[-1]), ast.Store())
     return assign(tgt, value_expr)
+
+
+def gen_nested_vectorized():
+    pass

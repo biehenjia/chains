@@ -14,7 +14,7 @@ def chain_ast(expr_string):
     tape = crt.prepare(symbol_table)
     with open('bla.txt','w') as f:
         for thing in tape:
-            f.write(str(thing))
+            f.write(str(thing)+"\n")
     
     statements = crt.codegen(symbol_table, out_name = "R", tape = tape)
     return stitch(statements,symtab=symbol_table,tape=tape, out_name="R")
