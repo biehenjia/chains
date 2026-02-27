@@ -25,5 +25,9 @@ def compile_ast(cr_ast):
     exec(code,namespace)
     return namespace["generated"]
 
+def preseed(expr_string):
+    cr, symbol_table = chainify(expr_string)
+    
+
 
 __all__ = ['chainify', 'CRnum', 'chain_ast', 'compile_ast']

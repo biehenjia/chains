@@ -106,6 +106,14 @@ class CRterm:
             for child in term.operands:
                 term.dependencies |= child.dependencies
     
+    def cr_seed(self, symbol_table):
+        env = {}
+        for (s_0, s_h) in symbol_table.items:
+            pass
+
+        for crt in self.postorder():
+            crt.cr
+
     def cse(self):
         memo = {}
         id_map = {}
