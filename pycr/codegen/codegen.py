@@ -94,8 +94,8 @@ def gen_update(crterm, register_symbol="r"):
     start_idx = crterm.start
     second_idx = crterm.start + 1
     mid_idx = crterm.mid
-    print(type(crterm.cr),update_idx, start_idx,second_idx, mid_idx)
-    print(crterm.updates)
+    #print(type(crterm.cr),update_idx, start_idx,second_idx, mid_idx)
+    #print(crterm.updates)
 
     updateR_L = rload(register_symbol, update_idx)
     updateR_S = rstore(register_symbol, update_idx)

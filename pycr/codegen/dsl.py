@@ -11,6 +11,7 @@ def div(a, b):return ast.BinOp(a, ast.Div(), b)
 def neg(x):return ast.UnaryOp(ast.USub(), x)
 def pow_(a, b):return ast.BinOp(a, ast.Pow(), b)
 def _m(fn, x):return ast.Call(ast.Attribute(load("math"), fn, ast.Load()), [x], [])
+
 def sin(x):return _m("sin", x)
 def cos(x):return _m("cos", x)
 def tan(x):return _m("tan", x)

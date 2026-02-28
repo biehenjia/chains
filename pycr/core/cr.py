@@ -149,8 +149,8 @@ class CRsum(CR):
     def simplify(self):
         result = self.copy()
         j = len(result) - 1
-        print('hi!')
-        print(result.operands)
+        #print('hi!')
+        #print(result.operands)
         while len(result) > 0 and isinstance(result[-1], CRnum) and result[-1].is_zero():
             result.pop()
         if len(result) == 0:

@@ -25,9 +25,14 @@ def compile_ast(cr_ast):
     exec(code,namespace)
     return namespace["generated"]
 
-def preseed(expr_string):
-    cr, symbol_table = chainify(expr_string)
-    
+
+
+
+# of the form variable, start, step
+
+
+
+
 
 
 __all__ = ['chainify', 'CRnum', 'chain_ast', 'compile_ast']
