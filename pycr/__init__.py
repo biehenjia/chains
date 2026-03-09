@@ -31,7 +31,7 @@ def compile_ast(cr_ast):
 # of the form variable, start, step
 
 
-
+# TODO: add numpy modes
 
 
 
