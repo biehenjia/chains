@@ -149,7 +149,7 @@ class CRterm:
     def prepare(self, symbol_table, cse = True):
         if cse:
             self.cse() # optional
-        self.propogate_dependencies()
+        #self.propogate_dependencies()
         self.partition_order(symbol_table)
         tape = self.produce_tape()
         return tape
