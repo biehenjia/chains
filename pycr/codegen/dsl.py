@@ -1,106 +1,75 @@
-import ast
-
-def name(id: str, ctx):return ast.Name(id, ctx)
-def load(id: str):return name(id, ast.Load())
-def store(id: str):return name(id, ast.Store())
-def c(x):return ast.Constant(x)
-def add(a, b): return ast.BinOp(a, ast.Add(), b)
-def sub(a, b):return ast.BinOp(a, ast.Sub(), b)
-def mul(a, b):return ast.BinOp(a, ast.Mult(), b)
-def div(a, b):return ast.BinOp(a, ast.Div(), b)
-def neg(x):return ast.UnaryOp(ast.USub(), x)
-def pow_(a, b):return ast.BinOp(a, ast.Pow(), b)
-def _m(fn, x):return ast.Call(ast.Attribute(load("math"), fn, ast.Load()), [x], [])
-
-def sin(x):return _m("sin", x)
-def cos(x):return _m("cos", x)
-def tan(x):return _m("tan", x)
-def exp(x):return _m("exp", x)
-def ln(x):return _m("log", x)
-def log(x):return _m("log10", x)
-def cot(x):return div(c(1), tan(x))
-def logb(x, base):return div(ln(x), ln(base))
-def assign(target: ast.expr, value: ast.expr):return ast.Assign([target], value)
-def aug_add(target: ast.expr, value: ast.expr):return ast.AugAssign(target, ast.Add(), value)
-def aug_mult(target: ast.expr, value: ast.expr):return ast.AugAssign(target, ast.Mult(), value)
-def subscript(value_expr: ast.expr, idx_expr: ast.expr, ctx):return ast.Subscript(value=value_expr, slice=idx_expr, ctx=ctx)
-def set_at(arr_expr: ast.expr, idx_expr: ast.expr, value_expr: ast.expr):return assign(subscript(arr_expr, idx_expr, ast.Store()), value_expr)
-def while_(test, body):return ast.While(test, body, [])
-def ret(x):return ast.Return(x)
+import ast 
 
 
-def _np(f, *args):
-    return ast.Call(ast.Attribute(load("numpy"), f, ast.Load()),list(args), [])
+def e(src):
+    return ast.parse(src, mode="eval").body
 
-def np_sin(x): return _np("sin", x)
-def np_cos(x): return _np("cos", x)
-def np_tan(x): return _np("tan", x)
-def np_exp(x): return _np("exp", x)
-def np_ln(x): return _np("log", x)
-def np_log(x): return _np("log10", x)
-def np_sqrt(x): return _np("sqrt", x)
+def s(src):
+    return ast.parse(src, mode="single").body[0]
 
+def rload(reg, idx):
+    return ast.Subscript(value=e(reg), slice=e(str(idx)), ctx=ast.Load())
 
-def np_zeroe(shape): return _np("zeros",shape)
-def np_array(x): return _np("array", x)
+def rstore(reg, idx):
+    return ast.Subscript(value= e(reg), slice=e(str(idx)), ctx=ast.Store())
 
+def rmov(reg, dst, src):
+    return ast.Assign([rstore(reg,dst)], rload(reg,src))
 
-def _flatten_stmts(xs):
-    out = []
-    for x in xs:
-        if x is None:
-            continue
-        if isinstance(x, list):
-            out.extend(_flatten_stmts(x))
-        else:
-            out.append(x)
-    return out
+class Block:
+    def __init__(self):
+        self.smts = []
 
+    def __iadd__(self, x):
+        self.stmts.extend(flatten(x) if isinstance(x, list) else [x])
 
-def for_range(i_target: ast.expr, stop: ast.expr, body):
-    body = _flatten_stmts(body)
-    if not body:
-        body = [ast.Pass()]
+    def let(self, name, expr):
+        self.stmts.append(ast.Assign([e(name)], e(expr) if isinstance(expr, str) else expr))
+        return self
+    
+    def set(self, target, expr):
+        self.stmts.append(ast.Assign([target], e(expr) if isinstance(expr, str) else expr))
+    
+    def for_range(self, var, stop, body_fn):
+        b = Block()
+        body_fn(b)
+        self.stmts.append(ast.For(
+            target = ast.Name(var, ast.Store()),
+            iter = e(f"range({stop})"),
+            body = b.stmts or [ast.Pass()],
+            orelse = [],
+        ))
+        return self
+    
+    def ret(self, expr):
+        self.stmts.append(ast.Return(e(expr) if isinstance(expr,str) else expr))
+    
+    def build(self):
+        return self.stmts 
+    
 
-    return ast.For(
-        target=i_target,
-        iter=ast.Call(load("range"), [c(0), stop], []),
-        body=body,
-        orelse=[],
-    )
-
-
-
-
-def fn(name_s: str, args, body):
+def fn(name, args, body):
     return ast.FunctionDef(
-        name_s,
+        name,
         ast.arguments(
-            posonlyargs=[],
-            args=[ast.arg(a) for a in args],
-            vararg=None,
-            kwonlyargs=[],
-            kw_defaults=[],
-            kwarg=None,
-            defaults=[],
+            posonlyargs=[], args = [ast.arg(a) for a in args], vararg = None, kwonlyargs=[],
+            kw_defaults=[], kwarg = None, defaults = []
         ),
-        body,
-        [],
-        None,
+        flatten(body) or [ast.Pass()], [], None,
     )
 
-
-def mod(*items):
-    m = ast.Module(
-        [
-            ast.ImportFrom("math", [ast.alias("*", None)], 0),
-            *items,
-        ],
-        [],
-    )
+def mod(*items, numpy=True):
+    imports = [ast.Import([ast.alias("numpy")])] if numpy else [ast.ImportFrom("math", [ast.alias("*"), 0])]
+    m = ast.Module([*imports, *items], [] )
     ast.fix_missing_locations(m)
     return m
 
+def emit(m): 
+    return ast.unparse(m)
 
-
-
+def flatten(x):
+    out = []
+    for item in (x if isinstance(x, list) else [x]):
+        if item is None: continue
+        out.extend(flatten(item) if isinstance(item, list) else [item])
+    return out 
