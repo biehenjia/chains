@@ -29,6 +29,22 @@ def while_(test, body):return ast.While(test, body, [])
 def ret(x):return ast.Return(x)
 
 
+def _np(f, *args):
+    return ast.Call(ast.Attribute(load("numpy"), f, ast.Load()),list(args), [])
+
+def np_sin(x): return _np("sin", x)
+def np_cos(x): return _np("cos", x)
+def np_tan(x): return _np("tan", x)
+def np_exp(x): return _np("exp", x)
+def np_ln(x): return _np("log", x)
+def np_log(x): return _np("log10", x)
+def np_sqrt(x): return _np("sqrt", x)
+
+
+def np_zeroe(shape): return _np("zeros",shape)
+def np_array(x): return _np("array", x)
+
+
 def _flatten_stmts(xs):
     out = []
     for x in xs:
