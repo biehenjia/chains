@@ -1,6 +1,5 @@
 import ast 
 
-
 def e(src):
     return ast.parse(src, mode="eval").body
 
@@ -18,7 +17,7 @@ def rmov(reg, dst, src):
 
 class Block:
     def __init__(self):
-        self.smts = []
+        self.stmts = []
 
     def __iadd__(self, x):
         self.stmts.extend(flatten(x) if isinstance(x, list) else [x])

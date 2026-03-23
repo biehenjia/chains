@@ -13,8 +13,6 @@ COT = 'COT'
 EXP = 'EXP'
 LOG = 'LOG'
 
-
-
 class Algebra:
 
     def __init__(self):
