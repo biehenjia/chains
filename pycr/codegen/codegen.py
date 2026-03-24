@@ -1,103 +1,15 @@
+from ..engine import IR
 from ..core import *
 from .dsl import *
-import sympy
 
-DIMS = "dims"
-TAPE_ARRAY = "R"
-# it will be i_1 to 
-# construct one contiguous tape that we pass around
-# tape should be generated beforehand
-
-
-
-def generate_initialize(crterm, block, symbol_table, rs = "r"):
-    pass
-
-
-def generate_dimension(crterm, block, symbol_table, rs = "r"):
-    # generate on the dimensions, for each element in the dimension in order
-    # produce a shift
-    orders = crterm.partition_order(symbol_table)
-    bounds = []
-    for order in orders:
-        if order:
-            bound_start = order[0].start
-            bound_end = order[-1].start + order[-1].trunc
-            bounds.append((bound_start,bound_end))
-        else:
-            bounds.append((0,0))
-        
-    
-
-    # prefix
-    # for loop
-    # ... for loop {}
-    #    copy level above
-    #    broadcast updates
-
-
-    # pseudo
-    # bodies = []
-    # for each order in orders:
-    #   for each item in the order: 
-    #       generate the shift body for it
-    #       append to bodies
-    # flatten bodies 
-    # foreach member to update, broadcast to update indices.
-
-    # we use i_1, i_2, for each of the loops
-    indices = [f"i_{i}" for i in range(len(symbol_table))]
-    inner = Block()
-    print(type(Block))
-    inner += s(f"A[{','.join(indices)}] = r[-1]")
-    
-
-    # 
-    for i in range(len(orders)):
-        order = orders[-i-1]
-        for crterm in order:
-            generate_shift(crterm,inner,rs)
-            generate_update(crterm,inner, rs)
-        outer = Block()
-        outer.for_range(f"i_{len(orders)-i-1}",f"b_{len(orders)-i-1}",inner)
-        b1, b2 = bounds[-i-1]
-        if b1 != b2:
-            outer += s(f"r[{b1}:{b2}] = R[{b1}:{b2}]")
-        generate_fetch(crterm,outer,rs)
-        inner = outer
-        
-    block += inner
-    
-        
-
-
-    
-
-def generate_shift(crterm, block, rs = "r"):
-    print(type(block))
-    # generate a statement that is the shift
-    cr = crterm.cr
-    if isinstance(cr, CRtrig):
-        t = crterm.trunc//2
-        start = crterm.start
-        inner = Block()
-        inner += s(f"__a = {rs}[{start}+i] * {rs}[{start}+{t}+i+1] + {rs}[{start}+ {t}+i] * {rs}[{start}+i+1]")
-        inner += s(f"__b = {rs}[{start}+{t}+i] * {rs}[{start}+{t}+i+1] - {rs}[{start}+i]*{rs}[{start}+i+1] ")
-        inner += s(f"{rs}[{start}+i] = __a")
-        inner += s(f"{rs}[{start}+{t}+i] = __b")
-        block.for_range("i", t-1, inner)
-
-    elif isinstance(cr, CRsum):
-        start = crterm.start
-        inner = Block()
-        inner += s(f"{rs}[{start} + i] += {rs}[{start} + i + 1]")
-        block.for_range("i", crterm.trunc-1, inner)
-
-    elif isinstance(cr, CRprod):
-        start = crterm.start
-        inner = Block()
-        inner += s(f"{rs}[{start} + i] += {rs}[{start} + i + 1]")
-        block.for_range("i", crterm.trunc-1, inner)
+RS = "r" # register symbol
+OT = "R" # original tape
+SV = "i" # shift variable 
+UR = "UR" # fetch read symbol
+UW = "UW" # fetch write symbol 
+RV = "A" # return array
+LS = "L" # loop symbol
+BS = "B" # bound symbol
 
 
 
@@ -120,30 +32,96 @@ _UPDATE_EXPR = {
 }
 
 
-def generate_update(crterm, block, rs="r"):
+def gen_shift(ir, cr, block):
+    start = ir.starts[cr]
+    inner = Block()
+
+    ri = f"{RS}[{start}+i]"
+    ri1 = f"{RS}[{start}+i+1]"
+
+    if isinstance(cr, CRtrig):
+        t = len(cr)//2
+        
+        rti = f"{RS}[{start}+{t}+i]"
+        rti1 = f"{RS}[{start}+{t}+i+1]"
+
+        inner += s(f"__a={ri}*{rti1}+{rti}*{ri1}")
+        inner += s(f"__b={rti}*{rti1}-{rti}*{ri1}")
+
+        inner += s(f"{ri}=__a")
+        inner += s(f"{rti}=__b")
+
+        block.for_range(f"{SV}", t-1, inner)
     
-    start = f"{rs}[{crterm.start}]"
-    m = f"{rs}[{crterm.mid}]"
-    u = f"{rs}[{crterm.start + 1}]"
-    tmpl = _UPDATE_EXPR[type(crterm.cr)]
-    block += s(f"{rs}[{crterm.update_index}] = {tmpl.format(start=start,m=m,u=u)}")
+    elif isinstance(cr, CRsum):
+        inner += s(f"{ri}+={ri1}")
+        block.for_range(f"{SV}", len(cr)-1, inner)
 
+    elif isinstance(cr, CRprod):
+        inner += s(f"{ri}*={ri1}")
+        block.for_range(f"{SV}", len(cr)-1, inner)
 
-# make into numpy array
-def generate_fetch(crterm, block, rs= "r"):
-    for update in crterm.updates:
-        # write, cr, read
-        write, cr, read = update
-        block += s(f"{rs}[{write}] = {rs}[{cr.start+read}]")
+def gen_fetch(order, reads,  block):
+    inner = Block()
+    inner += s(f"{RS}[{UW}_{order}[i]] = {RS}[{UR}_{order}[i]]")
+    block.for_range(f"{SV}", len(reads[order]),inner)
+
+# initialize register array and fetch arrays
+# 
+def gen_initialize(ir, block):
+    # initial tape is passed as an argument
+    block += s(f"{RS}[:] = {OT}[:]")
+    # updates for each order
+    reads = [[] for order in ir.orders]
+    writes = [[] for order in ir.orders]
+
+    for i,order in enumerate(ir.orders):
+        for c in order:
+            for j, operand in enumerate(c):
+                if not isinstance(operand, CRnum):
+                    reads[i].append(ir.starts[operand] + len(operand))
+                    writes[i].append( ir.starts[c] + j)
+    print(len(ir.st))
     
-    # should look something like this
-    if False:
-        # 2d array: A[i] = (r,w): (read write)
-        # iterate over and put R[read] to R[write]
-        pass
+    for i in range(len(ir.st)):
+        if reads[i]:
+            block += s(f"{UR}_{i}={reads[i]}")
+            block += s(f"{UW}_{i}={writes[i]}")
+    return reads
+
+# assume that IR is ready to go
+def gen_nested(ir):
+    block = Block()
+    reads = gen_initialize(ir, block)
+    loop_symbols = [f"{LS}_{i}" for i in range(len(ir.st))]
+    
+    inner = Block()
+    inner += s(f"{RV}[{','.join(loop_symbols)}]={RS}[-1]")
+
+    for i in range(len(ir.st)):
+        order = ir.orders[-i-1]
+
+        if not order:
+            continue
+
+        for c in order:
+            gen_shift(ir,c,inner)
+        outer = Block()
+        outer.for_range(loop_symbols[-i-1],f"{BS}_{len(ir.st)-i-1}", inner)
+        b1 = ir.starts[order[0]]
+        b2 = ir.starts[order[-1]] + len(order[-1])
+        if i +1 < len(ir.st):
+            outer += s(f"{RS}[{b1}:{b2}] = {OT}[{b1}:{b2}]")
+            gen_fetch(len(ir.st)-i-1,reads, outer)
+        inner = outer
+    
+    block += inner
+    return block
+
+        
+        
+    
 
 
 
     
-
-

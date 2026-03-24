@@ -45,13 +45,7 @@ class Block:
     def build(self):
         return self.stmts 
     
-    def build(self):
-        for i, stmt in enumerate(self.stmts):
-            if stmt is None:
-                raise ValueError(f"None at index {i}")
-            if not isinstance(stmt, ast.AST):
-                raise ValueError(f"non-AST at index {i}: {type(stmt)} {stmt}")
-        return self.stmts
+
     
 
 def fn(name, args, body):
