@@ -20,23 +20,22 @@ class Block:
         self.stmts = []
 
     def __iadd__(self, x):
-        self.stmts.extend(flatten(x) if isinstance(x, list) else [x])
-
-    def let(self, name, expr):
-        self.stmts.append(ast.Assign([e(name)], e(expr) if isinstance(expr, str) else expr))
+        if isinstance(x, Block):
+            self.stmts.extend(x.stmts)
+        elif isinstance(x, list):
+            self.stmts.extend(flatten(x))
+        else:
+            self.stmts.append(x)
         return self
-    
-    def set(self, target, expr):
-        self.stmts.append(ast.Assign([target], e(expr) if isinstance(expr, str) else expr))
-    
-    def for_range(self, var, stop, body_fn):
-        b = Block()
-        body_fn(b)
+
+
+    def for_range(self, var, stop, body):
+        stmts = body.stmts if isinstance(body, Block) else flatten(body)
         self.stmts.append(ast.For(
-            target = ast.Name(var, ast.Store()),
-            iter = e(f"range({stop})"),
-            body = b.stmts or [ast.Pass()],
-            orelse = [],
+            target=ast.Name(var, ast.Store()),
+            iter=e(f"range({stop})"),
+            body=stmts or [ast.Pass()],
+            orelse=[],
         ))
         return self
     
@@ -45,6 +44,14 @@ class Block:
     
     def build(self):
         return self.stmts 
+    
+    def build(self):
+        for i, stmt in enumerate(self.stmts):
+            if stmt is None:
+                raise ValueError(f"None at index {i}")
+            if not isinstance(stmt, ast.AST):
+                raise ValueError(f"non-AST at index {i}: {type(stmt)} {stmt}")
+        return self.stmts
     
 
 def fn(name, args, body):
@@ -58,7 +65,7 @@ def fn(name, args, body):
     )
 
 def mod(*items, numpy=True):
-    imports = [ast.Import([ast.alias("numpy")])] if numpy else [ast.ImportFrom("math", [ast.alias("*"), 0])]
+    imports = [ast.Import([ast.alias("numpy")])] if numpy else [ast.ImportFrom("math", [ast.alias("*")],0)]
     m = ast.Module([*imports, *items], [] )
     ast.fix_missing_locations(m)
     return m
@@ -70,5 +77,10 @@ def flatten(x):
     out = []
     for item in (x if isinstance(x, list) else [x]):
         if item is None: continue
-        out.extend(flatten(item) if isinstance(item, list) else [item])
-    return out 
+        if isinstance(item, Block):
+            out.extend(flatten(item.stmts))
+        elif isinstance(item, list):
+            out.extend(flatten(item))
+        else:
+            out.append(item)
+    return out

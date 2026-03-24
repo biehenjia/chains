@@ -29,6 +29,11 @@ class CR:
     def __getitem__(self, key):
         return self.operands[key]
     
+    def postorder(self):
+        for operand in self.operands:
+            yield from operand.postorder()
+        yield self
+
     def isnumber(self):
         return False
     
@@ -114,14 +119,21 @@ class CRnum(CR):
         self.order = -1
         self.length = 1
 
+    def postorder(self):
+        yield self
+
+
     def is_zero(self):
         return self.value.is_zero
+
 
     def is_one(self):
         return (self.value-1).is_zero
 
+
     def copy(self):
         return CRnum(self.value)
+    
     
     def valueof(self):
         return self.value

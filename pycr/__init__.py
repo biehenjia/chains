@@ -35,4 +35,4 @@ def compile_ast(cr_ast):
 
 
 
-__all__ = ['chainify', 'CRnum', 'chain_ast', 'compile_ast']
+__all__ = ['chainify', 'CRnum', 'chain_ast', 'compile_ast', 'generate_code']

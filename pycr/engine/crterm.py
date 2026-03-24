@@ -35,6 +35,7 @@ Computation graph of CRterm
 
         2.  
 '''
+
 from ..core import *
 from ..codegen import *
 
@@ -51,6 +52,7 @@ class CRterm:
         self.dependencies = {cr.order,}
         self.operands = []
         self.updates = []
+
         if not isinstance(self.cr, CRnum):
             self.trunc = len(self.cr)
             #print(type(self.cr),len(self .cr))
@@ -170,17 +172,4 @@ class CRterm:
             tape.append(c.cr.valueof())
         return tape
     
-    def codegen(self, symbol_table, out_name, tape):
-        orders = self.partition_order(symbol_table)
-        
-        # for order in orders:
-        #     for term in order:
-        #         print(type(term.cr), term.trunc)
-        blocks = []
-        for order in orders:
-            blocks.append([])
-            for instruction in order:
-                temp_block = [gen_fetch(instruction), gen_shift(instruction), gen_update(instruction)]
-                blocks[-1].append(temp_block)
-        # returns AST object that compiles the generated code
-        return gen_nested(blocks, symbol_table,out_name=out_name, n_registers=len(tape))
+    
