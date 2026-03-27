@@ -29,11 +29,11 @@ class Block:
         return self
 
 
-    def for_range(self, var, stop, body):
+    def for_range(self, var, stop, body, range = "range"):
         stmts = body.stmts if isinstance(body, Block) else flatten(body)
         self.stmts.append(ast.For(
             target=ast.Name(var, ast.Store()),
-            iter=e(f"range({stop})"),
+            iter=e(f"{range}({stop})"),
             body=stmts or [ast.Pass()],
             orelse=[],
         ))
@@ -78,3 +78,10 @@ def flatten(x):
         else:
             out.append(item)
     return out
+
+def compile_ast(tree):
+    ast.fix_missing_locations(tree)
+    code = compile(tree, filename="<gen>",mode="exec")
+    namespace = {}
+    exec(code, namespace)
+    return namespace["<gen>"]

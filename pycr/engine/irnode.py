@@ -43,6 +43,12 @@ class IR:
                 tape.append(c.valueof())
         self.tape = tape
 
+    def vectorize(self):
+        order = -1
+        
+    def printape(self):
+        print(self.tape)
+
     
     
             

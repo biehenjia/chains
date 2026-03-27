@@ -13,16 +13,14 @@ def parse_string(s,symbol_table = {}, error_reduction = 0):
         # for each symbol, 
         pass
     
-    symbols = expr.free_symbols
+    symbols = sympy.ordered(expr.free_symbols)
     # create auxiliary symbols representing start step
+    
     for symbol in symbols:
         if not symbol in symbol_table:
             # symbol_table[symbol] = {'order': len(symbol_table), 'params': (0, 1)}    
             symbol_table[symbol] = {'order': len(symbol_table), 'params': (sympy.Symbol(f'{symbol}_0'), sympy.Symbol(f'{symbol}_h'))}    
     return expr,symbol_table
-
-
-
 
 
 

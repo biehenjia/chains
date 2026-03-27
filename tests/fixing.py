@@ -1,7 +1,7 @@
 import numba,numpy, time
 
 from numba import llvmlite
-@numba.njit()
+@numba.njit(fastmath = True)
 def T(A, B0, B1):
     r0 = 0
     r1 = 1

@@ -2,22 +2,20 @@ from .api import *
 from .codegen import *
 from .core import *
 from .engine import * 
+import sympy
+
+
 
 def chainify(expr_string):
     expr_symbolic, symbol_table = parse_string(expr_string)
     cr = crmake(expr_symbolic,symbol_table)
     return cr, symbol_table
 
-def chain_ast(expr_string):
-    cr, symbol_table = chainify(expr_string)
-    crt = CRterm(cr)
-    tape = crt.prepare(symbol_table)
-    with open('bla.txt','w') as f:
-        for thing in tape:
-            f.write(str(thing)+"\n")
+def vchainify(expr_string, vector_symbol, lane_width=4):
+    expr_symbolic, symbol_table = parse_string(expr_string)
     
-    statements = crt.codegen(symbol_table, out_name = "R", tape = tape)
-    return stitch(statements,symtab=symbol_table,tape=tape, out_name="R")
+    
+
 
 def compile_ast(cr_ast):
     namespace = {}
@@ -26,6 +24,10 @@ def compile_ast(cr_ast):
     return namespace["generated"]
 
 
+
+
+        
+    
 
 
 # of the form variable, start, step
