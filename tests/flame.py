@@ -36,13 +36,13 @@ def npsin(v1, v2):
 
 
 
-expr = "x**2+y**2"
-code = pycr.compile_ast(pycr.chain_ast(expr))
+# expr = "x**2+y**2"
+# code = pycr.compile_ast(pycr.chain_ast(expr))
 
-A = np.zeros((20,20))
+# A = np.zeros((20,20))
 
-mtrx = test(-10, 1, 10, -10,1,10, npsin)
+# mtrx = test(-10, 1, 10, -10,1,10, npsin)
 
-code(A, -10, 1, 20, -10, 1, 10)
-print(ast.unparse(pycr.chain_ast(expr)))
-plot_surfaces (A)
+# code(A, -10, 1, 20, -10, 1, 10)
+# print(ast.unparse(pycr.chain_ast(expr)))
+# plot_surfaces (A)

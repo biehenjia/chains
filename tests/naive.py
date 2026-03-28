@@ -1,7 +1,7 @@
 import llvmlite.binding as llvm
 llvm.set_option('', '--disable-loop-vectorization')
 llvm.set_option('', '--disable-slp-vectorization')
-from numba import njit
+from numba import njit, prange
 import numpy, time
 print('hi')
 
@@ -10,7 +10,7 @@ def T(A, X,Y):
     for i in range(X):
         i2 = i**2
         for j in range(Y):
-            A[i,j] = i2 + j**2
+            A[i,j] = i2 + numpy.sin(j)
 
 
 
@@ -22,14 +22,14 @@ def T(A, X,Y):
 
 A = numpy.zeros((1,1))
 T(A,1,1)
-X = Y= 1000
+X = Y= 10000
 
-sig = list(T.signatures)[0]
+# sig = list(T.signatures)[0]
 asm = list(T.inspect_asm().values())[0]
 
 first_fn_end = asm.find('__ZN7cpython')
 print(asm[:first_fn_end])
-# # print(asm)
+# print(asm)
 
 
 

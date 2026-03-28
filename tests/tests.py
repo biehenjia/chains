@@ -10,7 +10,7 @@ import flame
 with open("equations.json") as f:
     cfg = json.load(f)
 
-repeats = cfg.get("repeats", 5)
+repeats = cfg.get("repeats", 2)
 expressions = cfg["expressions"]
 
 xs = np.arange(1000, dtype=np.float64)
@@ -67,13 +67,25 @@ def f(x_arr, y_arr, out):
     return njit(ns["f"])
 
 def make_crJIT(expr):
-    code = pycr.compile_ast(pycr.chain_ast(expr))
+    chain , st = pycr.chainify(expr)
+    ir = pycr.IR(chain, st)
+    g = pycr.Generator(ir)
+    code = pycr.compile_ast(g.generate())
     return njit(code)
 
 def make_cr(expr):
-    code = pycr.compile_ast(pycr.chain_ast(expr))
+    chain , st = pycr.chainify(expr)
+    ir = pycr.IR(chain, st)
+    g = pycr.Generator(ir)
+    code = pycr.compile_ast(g.generate())
     return code
 
+def make_crPNJIT(expr):
+    chain , st = pycr.chainify(expr)
+    ir = pycr.IR(chain, st)
+    g = pycr.Generator(ir)
+    code = pycr.compile_ast(g.generate_parallel())
+    return njit(code,parallel=True)
 
 def bench(fn, repeats):
     times = []
@@ -91,6 +103,7 @@ def benchmark_expression(expr):
     nb_f = make_numba(expr)
     cr_f = make_cr(expr)
     crnjit_f = make_crJIT(expr)
+    crpnjit_f = make_crPNJIT(expr)
 
 
     def run_python():
@@ -108,22 +121,30 @@ def benchmark_expression(expr):
     
     def run_cr():
         out = np.zeros((xs.shape[0],ys.shape[0]))
-        cr_f(out,0,1,xs.shape[0], 0,1, ys.shape[0])
+        cr_f(out,0,1,0,1,xs.shape[0], ys.shape[0])
 
     def run_crjit():
         out = np.zeros((xs.shape[0],ys.shape[0]))
-        crnjit_f(out, 0,1, xs.shape[0], 0,1, ys.shape[0])
+        crnjit_f(out, 0,1, 0,1, xs.shape[0],ys.shape[0])
         return out
+    
+    def run_crpnjit(): 
+        out = np.zeros((xs.shape[0],ys.shape[0]))
+        crpnjit_f(out, 0,1, 0,1, xs.shape[0], ys.shape[0],4)
+        return out
+
 
 
     run_numba()
     out = run_crjit()
-    flame.plot_surfaces(out)
+    run_crpnjit()
+    # flame.plot_surfaces(out)
 
     py_min, py_avg = bench(run_python, repeats)
     np_min, np_avg = bench(run_numpy, repeats)
     nb_min, nb_avg = bench(run_numba, repeats)
     cr_min, cr_avg = bench(run_cr, repeats)
+    crpjit_min, crpjit_avg = bench(run_crpnjit, repeats)
     crjit_min, crjit_avg = bench(run_crjit, repeats)
     return {
         "expr": expr,
@@ -136,13 +157,15 @@ def benchmark_expression(expr):
         "cr_min": cr_min,
         "cr_avg": cr_avg,
         "crjit_min": crjit_min,
-        "crjit_avg": crjit_avg
+        "crjit_avg": crjit_avg,
+        "crpjit_min": crpjit_min,
+        "crpjit_avg": crpjit_avg
     }
 
 
 results = [benchmark_expression(expr) for expr in expressions]
 
-print(f"{'expr':40} {'python':>12} {'numpy':>12} {'numba':>12} {'cr':>12} {"crjit":>12}")
+print(f"{'expr':40} {'python':>12} {'numpy':>12} {'numba':>12} {'cr':>12} {"crjit":>12} {"crpjit":>12}")
 print("-" * 96)
 for r in results:
     print(
@@ -152,5 +175,6 @@ for r in results:
         f"{r['numba_avg']:12.6f}"
         f"{r['cr_avg']:12.6f}"
         f"{r['crjit_avg']:12.6f}"
+        f"{r['crpjit_min']:12.6f}"
         
     )

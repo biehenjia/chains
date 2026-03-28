@@ -1,10 +1,10 @@
-import numpy
-from numba import njit, prange
+import numpy, time
+import numba 
 
-@njit
-def generated(A, x_0, x_h, y_0, y_h, B_0, B_1, n_threads=4):
+@numba.njit(parallel=True)
+def generated(A, x_0, x_h, y_0, y_h, B_0, B_1, n_threads):
     chunk = B_0 // n_threads
-    for t in prange(n_threads):
+    for t in numba.prange(n_threads):
         K = t * chunk
         x_0 = K
         r_0 = R_0 = x_0 ** 2 + y_0 ** 2
@@ -15,7 +15,7 @@ def generated(A, x_0, x_h, y_0, y_h, B_0, B_1, n_threads=4):
         r_5 = R_5 = y_0 * y_h + y_h * (y_0 + y_h)
         r_6 = R_6 = 2 * y_h ** 2
         r_7 = R_7 = x_0 ** 2 + y_0 ** 2
-        UL = min(K + chunk, B_0)
+        UL = B_0 if t == n_threads - 1 else K + chunk
         for L_0 in range(K, UL):
             r_0 += r_1
             r_1 += r_2
@@ -31,9 +31,11 @@ def generated(A, x_0, x_h, y_0, y_h, B_0, B_1, n_threads=4):
             r_4 = r_3
             r_7 = r_4
 
-X = Y = 10
+X = Y = 10000
 A = numpy.zeros((X,Y))
-generated(numpy.zeros((X,Y)),0,1,0,1,X,Y)
-
-generated(A,0,1,0,1,X,Y)
-print(A)
+generated(numpy.zeros((1,1)),0,1,0,1,1,1,4)
+start = time.perf_counter()
+generated(A,0,1,0,1,X,Y,4)
+end = time.perf_counter()
+print(end-start )
+# print(A)
