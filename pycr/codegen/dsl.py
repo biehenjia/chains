@@ -59,7 +59,7 @@ def fn(name, args, body):
     )
 
 def mod(*items, numpy=True):
-    imports = [ast.Import([ast.alias("numpy")])] if numpy else [ast.ImportFrom("math", [ast.alias("*")],0)]
+    imports = [ast.Import([ast.alias("numpy"), ast.alias("numba")])] if numpy else [ast.ImportFrom("math", [ast.alias("*")],0)]
     m = ast.Module([*imports, *items], [] )
     ast.fix_missing_locations(m)
     return m

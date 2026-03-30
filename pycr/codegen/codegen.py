@@ -160,13 +160,15 @@ class Generator:
     def _gen_initialize(self):
         block = Block()
         for i in range(len(self.ir.tape)):
-            block += s(f"{RS}_{i}={OT}_{i} = {OT}[{i}]")
+            block += s(f"{RS}_{i}={OT}_{i} = {NumPyPrinter().doprint(self.ir.tape[i])}")
         return block 
 
     def _gen_initialize_parallel(self):
         block = Block()
         block += s(f"{CN} = t*{CK}")
-        outerSymbol = min(self.ir.st, key= )
+        outerS = min(self.ir.st, key= lambda x:  self.ir.st[x].get("order",float('inf')))
+        start,step = self.ir.st[outerS]["params"]
+        block += s(f"{start} = {CN}")
         for i in range(len(self.ir.tape)):
             block += s(f"{RS}_{i}={OT}_{i} = {NumPyPrinter().doprint(self.ir.tape[i])}")
         
@@ -178,7 +180,13 @@ class Generator:
         block += self._gen_initialize()
         block += self._gen_nested()
         B = [f"B_{i}" for i in range(len(self.ir.st))]
-        tree = mod(fn("generated", ['A','R'] + B, block.stmts))
+        P = []
+        for symbol in self.ir.st:
+            start,step = self.ir.st[symbol]["params"]
+            P.append(f"{start}")
+            P.append(f"{step}")
+
+        tree = mod(fn("generated", ['A'] + P + B, block.stmts))
         ast.fix_missing_locations(tree)
         return tree
     
@@ -227,9 +235,16 @@ class Generator:
 
         block += self._gen_initialize_parallel()
         block += self._gen_nested_parallel()
-        outer.for_range("t", NT, block, range="prange")
+        outer.for_range("t", NT, block, range="numba.prange")
         B = [f"B_{i}" for i in range(len(self.ir.st))]
-        tree = mod(fn("generated", ['A','R'] + B, outer.stmts))
+        P = []
+        for symbol in self.ir.st:
+            start,step = self.ir.st[symbol]["params"]
+            P.append(f"{start}")
+            P.append(f"{step}")
+        
+        
+        tree = mod(fn("generated", ['A'] +P+ B + [f"{NT}"], outer.stmts))
         ast.fix_missing_locations(tree)
         return tree
 
