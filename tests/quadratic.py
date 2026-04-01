@@ -2,9 +2,6 @@ import numpy
 
 res = numpy.zeros((10,10),dtype=int)
 
-
-
-
 x = [0,1,2]
 y = [0,1,2]
 yb = [0,1,2]
@@ -22,6 +19,5 @@ for i in range(10):
         
     y = yb[::]
     y[0] = x[0]
-        
 
 print(res)        
