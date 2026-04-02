@@ -15,8 +15,8 @@ readme = "README.md"
 dependencies = [
     "numpy>=2.0.2",
     "sympy>=1.14.0",
+    "numba"
 ]
 
-# jax or some JIT like numba
-# CUDA?
+
 optional-dependencies = {  }

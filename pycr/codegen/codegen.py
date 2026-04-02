@@ -17,8 +17,6 @@ CK = "chunk" # chunk
 UL = "UL"
 
 
-
-
 _UPDATE_EXPR = { 
     CRsum: "{start}",
     CRprod: "{start}",
@@ -108,7 +106,6 @@ class Generator:
         t = len(cr)//2
         m = start+t
         u = start+1
-
 
         s_start = f"{RS}_{start}"
         s_mid = f"{RS}_{m}"
