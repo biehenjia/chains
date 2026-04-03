@@ -59,7 +59,13 @@ def fn(name, args, body):
     )
 
 def mod(*items, numpy=True):
-    imports = [ast.Import([ast.alias("numpy"), ast.alias("numba")])] if numpy else [ast.ImportFrom("math", [ast.alias("*")],0)]
+    imports = [
+        ast.ImportFrom(module="numpy", names=[ast.alias("*")], level=0),
+        ast.ImportFrom(module="numba", names=[ast.alias("*")], level=0),
+    ] if numpy else [
+        ast.ImportFrom(module="math", names=[ast.alias("*")], level=0),
+        ast.ImportFrom(module="numba", names=[ast.alias("*")], level=0),
+    ]
     m = ast.Module([*imports, *items], [] )
     ast.fix_missing_locations(m)
     return m
@@ -81,7 +87,7 @@ def flatten(x):
 
 def compile_ast(tree):
     ast.fix_missing_locations(tree)
-    code = compile(tree, filename="<gen>",mode="exec")
+    code = compile(tree, filename="generated",mode="exec")
     namespace = {}
     exec(code, namespace)
-    return namespace["<gen>"]
+    return namespace["generated"]
