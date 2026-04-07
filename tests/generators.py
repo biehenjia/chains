@@ -68,7 +68,8 @@ class Generator:
             symbol_table[s] = (0,1)
         ir = pycr.IR(cr, symbol_table)
         g = pycr.Generator(ir)
-        A = g.generate()
+        f = g.generate()
+        return f
     
 expr = "x**2+sin(y)"
 g = Generator(expr)

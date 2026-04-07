@@ -34,9 +34,11 @@ def powCRsumCRnum(l: CRsum, r: CRnum):
             return result
 
         else:
+            
             raise NotImplementedError("NEGATIVE CRSUM EXPONNENTS NOD DONE")
     else:
-        raise NotImplementedError("NON-INTEGER CRSUM EXPONNENTS NOT DONE")
+        return CREpow(l, r)
+        # raise NotImplementedError("NON-INTEGER CRSUM EXPONNENTS NOT DONE")
 
 
 @CRalgebra.defineBinary(POW, CRnum, CRsum)
