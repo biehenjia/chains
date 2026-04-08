@@ -2,7 +2,7 @@ from ..engine import IR
 from ..core import *
 from .dsl import *
 from sympy.printing.numpy import NumPyPrinter
-
+from sympy.printing.python import PythonPrinter
 RS = "r" # register symbol
 OT = "R" # original tape
 SV = "i" # shift variable 
@@ -34,6 +34,7 @@ _UPDATE_EXPR = {
     CRElog: "numpy.log({start})/numpy.log({u})",
 }
 
+
 # just a wrapper
 class Generator:
     
@@ -53,10 +54,8 @@ class Generator:
                 ri1 = f"{RS}_{start+i+1}"
                 rti = f"{RS}_{start+t+i}"
                 rti1 = f"{RS}_{start+t+i+1}"
-
                 inner += s(f"__a={ri}*{rti1}+{rti}*{ri1}")
                 inner += s(f"__b={rti}*{rti1}-{rti}*{ri1}")
-
                 inner += s(f"{ri}=__a")
                 inner += s(f"{rti}=__b")
 
@@ -67,8 +66,30 @@ class Generator:
         elif isinstance(cr, CRprod):
             for i in range(len(cr)-1):
                 inner += s(f"{RS}_{start+i} *= {RS}_{start+i+1}")
-        
 
+        elif isinstance(cr, CREadd):
+            inner += s(f"{RS}_{start}")
+
+        elif isinstance(cr, CREmul):
+            pass
+
+        elif isinstance(cr, CREpow):
+            pass
+
+        elif isinstance(cr, CREsin):
+            pass
+
+        elif isinstance(cr, CREcos):
+            pass
+
+        elif isinstance(cr, CREtan):
+            pass
+
+        elif isinstance(cr, CRElog):
+            pass
+
+        
+        
         return inner
         
     def _gen_fetch(self, cr):
@@ -86,8 +107,6 @@ class Generator:
         u = f"{RS}_{mystart+1}"
         mid = f"{RS}_{mystart+len(cr)//2}"
         fmt = _UPDATE_EXPR[type(cr)]
-
-
         inner += s(f"{RS}_{mystart+len(cr)} = {fmt.format(start=start,m=mid,u=u)}")
         
         return inner
@@ -157,7 +176,8 @@ class Generator:
     def _gen_initialize(self):
         block = Block()
         for i in range(len(self.ir.tape)):
-            block += s(f"{RS}_{i}={OT}_{i} = {NumPyPrinter().doprint(self.ir.tape[i])}")
+            # block += s(f"{RS}_{i}={OT}_{i} = {NumPyPrinter().doprint(self.ir.tape[i])}")
+            block += s(f"{RS}_{i}={OT}_{i} = {PythonPrinter().doprint(self.ir.tape[i])}")
         return block 
 
     def _gen_initialize_parallel(self):
@@ -167,7 +187,7 @@ class Generator:
         start,step = self.ir.st[outerS]["params"]
         block += s(f"{start} = {CN}")
         for i in range(len(self.ir.tape)):
-            block += s(f"{RS}_{i}={OT}_{i} = {NumPyPrinter().doprint(self.ir.tape[i])}")
+            block += s(f"{RS}_{i}={OT}_{i} = {PythonPrinter().doprint(self.ir.tape[i])}")
         
         return block
     

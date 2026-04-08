@@ -72,9 +72,9 @@ class Generator:
         f = pycr.compile_ast(m)
         return lambda A: f(A,**kwargs)
     
+
     
-    
-expr = "x**2+(0.5)*sin(45*y)"
+expr = "x**2+sin(y)"
 g = Generator(expr)
 s = g.compile_pycr(10)
 A = numpy.zeros((10,10),dtype=numpy.float32)

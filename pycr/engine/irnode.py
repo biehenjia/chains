@@ -42,6 +42,7 @@ class IR:
                     tape.append(operand.valueof())
                 tape.append(c.valueof())
         self.tape = tape
+        print(self.cr)
 
     def vectorize(self):
         order = -1
