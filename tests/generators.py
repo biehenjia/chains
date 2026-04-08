@@ -1,4 +1,4 @@
-import sympy, numba, numpy, numexpr, ast, pycr
+import sympy, numba, numpy, numexpr, ast, pycr, inspect
 from pycr.codegen import dsl 
 from bench import benchmark
 
@@ -64,19 +64,25 @@ class Generator:
     
     def compile_pycr(self, n):
         cr, symbol_table = pycr.chainify(self.expr)
-        for s in symbol_table:
-            symbol_table[s] = (0,1)
+        kwargs = {f"{v}_0": 0 for v in self.symbols} | {f"{v}_h":1 for v in self.symbols} | {f"B_{i}":n for i in range(len(self.symbols))}
         ir = pycr.IR(cr, symbol_table)
         g = pycr.Generator(ir)
-        f = g.generate()
-        return f
+        m = g.generate()
+        print(ast.unparse(m))
+        f = pycr.compile_ast(m)
+        return lambda A: f(A,**kwargs)
     
-expr = "x**2+sin(y)"
+    
+    
+expr = "x**2+(0.5)*sin(45*y)"
 g = Generator(expr)
-s = g.compile_prange(10)
-A = numpy.zeros((10,10))
-
+s = g.compile_pycr(10)
+A = numpy.zeros((10,10),dtype=numpy.float32)
 s(A)
+print(A)
+
+
+
 
 
 

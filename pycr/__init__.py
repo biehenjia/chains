@@ -4,6 +4,8 @@ from .core import *
 from .engine import * 
 import sympy
 
+import numpy, numba
+
 
 
 def chainify(expr_string):
@@ -18,7 +20,7 @@ def vchainify(expr_string, vector_symbol, lane_width=4):
 
 
 def compile_ast(cr_ast):
-    namespace = {}
+    namespace = {"numpy":numpy, "numba":numba}
     code = compile(cr_ast, filename="<ast>", mode="exec")
     exec(code,namespace)
     return namespace["generated"]
