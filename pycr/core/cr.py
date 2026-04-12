@@ -231,7 +231,7 @@ class CRE(CR):
 
     def __init__(self, l, r):
         self.operands = [l,r]
-        self.order = min(l.order, r.order)
+        self.order = max(l.order, r.order)
 
 class CREadd(CRE):
     

@@ -30,7 +30,8 @@ class IR:
                 orders[c.order].append(c)
         # list of cr's
         self.orders = orders
-    
+
+    # no more update index for CRE types
     def prepare(self):
         self.partition()
         tape = []
@@ -38,9 +39,11 @@ class IR:
             for c in order:
                 # the start of the block representing s: the cr
                 self.starts[c] = len(tape)
-                for operand in c:
-                    tape.append(operand.valueof())
-                tape.append(c.valueof())
+                if isinstance(c, CRE):
+                    tape.append(c.valueof())
+                else:
+                    for operand in c:
+                        tape.append(operand.valueof())
         self.tape = tape
         print(self.cr)
 

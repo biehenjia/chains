@@ -2,7 +2,7 @@ import sympy, numba, numpy, numexpr, ast, pycr, inspect
 from pycr.codegen import dsl 
 from bench import benchmark
 
-class Generator:
+class Testcase:
 
     def __init__(self, expr):
         self.expr = expr
@@ -49,7 +49,7 @@ class Generator:
         tree = dsl.mod(dsl.fn("generated",["A"], block.stmts ),numpy=False)
         print(ast.unparse(tree))
         ast.fix_missing_locations(tree)
-        return dsl.compile_ast(tree)
+        return numba.njit(dsl.compile_ast(tree),parallel=True)
 
     def compile_numexpr(self, n ):
         grids = {s: numpy.arange(n) for s in self.symbols}  # 1D, not meshgrid
@@ -67,19 +67,62 @@ class Generator:
         kwargs = {f"{v}_0": 0 for v in self.symbols} | {f"{v}_h":1 for v in self.symbols} | {f"B_{i}":n for i in range(len(self.symbols))}
         ir = pycr.IR(cr, symbol_table)
         g = pycr.Generator(ir)
-        m = g.generate()
-        print(ast.unparse(m))
+        m = g.generate_test(n)
+        # print(ast.unparse(m))
         f = pycr.compile_ast(m)
-        return lambda A: f(A,**kwargs)
+        return f
     
+    def _compile_prpycr(self, n, p=False):
+        cr, symbol_table = pycr.chainify(self.expr)
+        ir = pycr.IR(cr, symbol_table)
+        g = pycr.Generator(ir)
+        m = g.generate_testparallel(n)
+        if p:
+            print(ast.unparse(m))
+        f = pycr.compile_ast(m)
+        return f
+    
+    def compile_npycr(self, n):
+        return numba.njit(self.compile_pycr(n))
+    
+    def compile_nprpycr(self, n, p = False):
+        return numba.njit(self._compile_prpycr(n,p),parallel=True)
+    
+    # gets all of the functions into a list
+    def getall(self, n,r=2):
+        fs = [
+            self.compile_nprpycr,
+              self.compile_npycr, 
+            #   self.compile_pycr,
+              self.compile_numba,
+            #   self.compile_scalar,
+            #   self.compile_numexpr,
+              self.compile_numpy,
+              self.compile_prange
+              ]
+        funcs = {}
+        times = [[] for i in range(len(fs))]
+        res = {}
+        for i in range(len(fs)):
+            funcs[fs[i].__name__] = benchmark(times[i],repeats=r)(fs[i](n))
+            res[fs[i].__name__] = times[i]
+        return funcs, res 
+        
+            
+# thing = "x**2"
+# tc = Testcase(thing)
+# f = tc.compile_nprpycr(5,p=True)
+        
+
 
     
-expr = "x**2+sin(y)"
-g = Generator(expr)
-s = g.compile_pycr(10)
-A = numpy.zeros((10,10),dtype=numpy.float32)
-s(A)
-print(A)
+    
+
+
+
+
+
+
 
 
 

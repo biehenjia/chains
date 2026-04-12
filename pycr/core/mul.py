@@ -54,7 +54,8 @@ def mulCRprodCRnum(l: CRprod, r: CRnum):
     result[0] *= r
     return result
 
-@CRalgebra.defineBinary(MUL, CRprod, CRtrig, commutative=True)
+#TODO: fix mul case for 
+@CRalgebra.defineBinary(MUL, CRprod, CRcos, commutative=True)
 def mulCRprodCRtrig(l: CRprod, r: CRtrig):
     if len(r)//2 > len(l):
         o1 = r
