@@ -12,16 +12,20 @@ class IR:
         self.tape = [] # contiguous tape
         self.orders = []
 
+        
     def postorder(self):
         return self.cr.postorder()
+    
 
     # fix later
     def cse(self):
         pass
     
+
     def seed(self, st):
         self.st = st
     
+
     def partition(self):
         orders = [[] for _ in self.st ]
         s = self.cr.postorder()
@@ -30,6 +34,7 @@ class IR:
                 orders[c.order].append(c)
         # list of cr's
         self.orders = orders
+
 
     # no more update index for CRE types
     def prepare(self):
@@ -47,9 +52,11 @@ class IR:
         self.tape = tape
         print(self.cr)
 
+
     def vectorize(self):
         order = -1
         
+    
     def printape(self):
         print(self.tape)
 

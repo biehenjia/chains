@@ -75,6 +75,27 @@ def mulCRprodCRtrig(l: CRprod, r: CRtrig):
         result[i+newlength] = o1[i+newlength] * o2[i]
     return result
 
+#TODO: fix mul case for 
+@CRalgebra.defineBinary(MUL, CRprod, CRsin, commutative=True)
+def mulCRprodCRtrig(l: CRprod, r: CRtrig):
+    if len(r)//2 > len(l):
+        o1 = r
+        o2 = l.correctP(len(r)//2)
+        newlength = len(r)//2
+    elif len(r)//2 < len(l):
+        o1 = r.correctT(len(l))
+        o2 = l
+        newlength = len(l)//2
+    else:
+        o1 = r
+        o2 = l
+        newlength = len(r)//2
+    result = type(r)(r.order, newlength*2)
+    for i in range(newlength):
+        result[i] = o1[i] * o2[i]
+        result[i+newlength] = o1[i+newlength] * o2[i]
+    return result
+
 @CRalgebra.defineBinary(MUL, CRsin, CRnum, commutative=True)
 def mulCRsinCRnum(l: CRsin, r: CRnum):
     result = l.copy()

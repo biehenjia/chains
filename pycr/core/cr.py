@@ -1,4 +1,4 @@
-import sympy, types, hashlib
+import sympy, types, hashlib, struct
 from .algebra import *
 
 CRalgebra = Algebra()
@@ -104,7 +104,9 @@ class CR:
     def valueof(self):
         return self[0].valueof()
     
+        
     
+
 class CRnum(CR):
     # can be numeric: rational, expression, symbolic
     # only case when symbolic is during variable injection
@@ -112,7 +114,7 @@ class CRnum(CR):
         # default to sympy value
         if not isinstance(value, sympy.Symbol):
             # use Sympy smart constructor to cast numeric types
-            self.value = sympy.S(value)
+            self.value = sympy.S(str(value), rational=True)
         else:
             self.value = value
         
@@ -155,6 +157,14 @@ class CRnum(CR):
     def walk_str(self, prefix="", terminal=True):
         return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
 
+    def crhash(self):
+        h = hashlib.blake2b()
+        h.update(b"CRnum")
+        h.update(str(self.value).encode())
+        return h.digest()
+        
+        
+
     
 
 class CRsum(CR):
@@ -170,6 +180,24 @@ class CRsum(CR):
         else:
             return result
     
+    def crhash(self):
+        pass
+    
+    # no mutation happens by the time we call this 
+    def suffix_hash(self):
+        if hasattr(self,"suffix_hashes"):
+            return self.suffix_hashes
+        suffix_hashes = [None for i in range(len(self))]
+        prev = f"CRsum({self.order})".encode()
+        for i in range(len(self)):
+            h = hashlib.blake2b()
+            h.update(prev)
+            h.update(self[i].crhash())
+            h.update(struct.pack("i",len(object)-i-1))
+            suffix_hashes[-i-1] = h.digest()
+            prev = suffix_hashes[-i-1]
+        return suffix_hashes
+        
     
 
 class CRprod(CR):
