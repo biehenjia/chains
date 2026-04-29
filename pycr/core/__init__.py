@@ -13,7 +13,7 @@ __all__ = [
     'CR', 'CRnum', 'CRsum', 'CRprod', 
     'CRtrig', 'CRsin', 'CRcos', 'CRtan', 'CRcot',
     'CRE', 'CREadd', 'CREmul', 'CREpow', 'CRElog',
-    'CREtrig', 'CREsin', 'CREcos', 'CREtan', 'CREcot',
+     'CREsin', 'CREcos', 'CREtan', 'CREcot',
 
     'sin', 'cos', 'tan','cot', 'log'
 ]

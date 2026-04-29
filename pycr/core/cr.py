@@ -1,59 +1,40 @@
-import sympy, types, hashlib, struct
+import sympy, hashlib, struct
 from .algebra import *
+from operator import add, mul, pow
 
 CRalgebra = Algebra()
-PROTOCOL = hashlib.blake2b
 
-'''
-Supported operations:
-ADD, MUL, POW
-SIN, COS, TAN, COT
-LOG, LN, EXP, SQRT
-
-Constants:
-e, pi, I  
-'''
 
 class CR:
-    def __init__(self, order, length):
+    def __init__(self, operands, order): 
+        self.operands = operands
         self.order = order
-        self.length = length
-        self.operands = [None]*length
-        
-    def __len__(self):
-        return len(self.operands)
-    
-    def __setitem__(self, key, value):
-        self.operands[key] = value
 
-    def __getitem__(self, key):
-        return self.operands[key]
+    def __post_init__(self):
+        # construct hash
+        # selfsimplify
+        pass
+
+    def __len__(self): return len(self.operands) 
+    def __getitem__(self, key): return self.operands[key]
     
     def postorder(self):
         for operand in self.operands:
             yield from operand.postorder()
         yield self
 
-    def isnumber(self):
-        return False
-    
-    def pop(self):
-        return self.operands.pop()
-    
     def copy(self):
-        res = type(self)(self.order, len(self))
-        for i in range(len(self)):
-            res[i] = self[i].copy()
-        return res
+        new_operands = [self[i].copy() for i in range(len(self))]
+        return type(self)(new_operands, self.order)
     
-    def __add__(self, target):
+    def __add__(self,target):
         if self.order > target.order:
             key = (type(self), CRnum)
         elif self.order < target.order:
             key = (CRnum, type(target))
         else:
             key = (type(self), type(target))
-        return CRalgebra.apply(ADD, self, target, key =key)
+        return CRalgebra.apply(ADD, self, target , key=key)
     
     def __mul__(self, target):
         if self.order > target.order:
@@ -62,30 +43,23 @@ class CR:
             key = (CRnum, type(target))
         else:
             key = (type(self), type(target))
-        return CRalgebra.apply(MUL, self, target, key =key)
+        return CRalgebra.apply(MUL, self, target, key=key)
 
     def __pow__(self, target):
         key = (type(self),type(target))
         return CRalgebra.apply(POW, self, target, key=key)
-
-    def sin(self):
-        return CRalgebra.apply(SIN, self, key=type(self))
-
-    def cos(self):
-        return CRalgebra.apply(COS, self, key=type(self))
-
-    def tan(self):
-        return CRalgebra.apply(TAN, self, key=type(self))
     
-    def cot(self):
-        return CRalgebra.apply(COT, self, key=type(self))
+    def sin(self): return CRalgebra.apply(SIN, self, key=type(self))
+    def cos(self): return CRalgebra.apply(COS, self, key=type(self))
+    def tan(self): return CRalgebra.apply(TAN, self, key=type(self))
+    def cot(self): return CRalgebra.apply(COT, self, key=type(self))
     
     def log(self, target=None):
         if target is None:
             target = CRnum(sympy.E)
         key = (type(self), type(target))
         return CRalgebra.apply(LOG, self, target, key=key)
-
+    
     def __str__(self):
         layers = [f"{self.__class__.__name__}({self.order})"]
         for i,node in enumerate(self):
@@ -103,211 +77,115 @@ class CR:
     
     def valueof(self):
         return self[0].valueof()
-    
-        
-    
 
 class CRnum(CR):
-    # can be numeric: rational, expression, symbolic
-    # only case when symbolic is during variable injection
     def __init__(self, value):
-        # default to sympy value
         if not isinstance(value, sympy.Symbol):
-            # use Sympy smart constructor to cast numeric types
-            self.value = sympy.S(str(value), rational=True)
+            self.value = (sympy.S(str(value), rational=True),)
         else:
-            self.value = value
-        
+            self.value = (value,)
         self.order = -1
-        self.length = 1
 
-    def postorder(self):
-        yield self
-
-
-    def is_zero(self):
-        return self.value.is_zero
-
-
-    def is_one(self):
-        return (self.value-1).is_zero
-
-
-    def copy(self):
-        return CRnum(self.value)
-    
-    
-    def valueof(self):
-        return self.value
-    
-    def simplify(self):
-        return self.copy()
-    
-    def is_integer(self):
-        return self.value.is_integer
-    
-    def __str__(self):
-        return f"CRnum({self.value})"
-    
-    
-
-    def __len__(self):
-        return 0
-    
-    def walk_str(self, prefix="", terminal=True):
-        return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
+    def postorder(self): yield self
+    def valueof(self): return self.value[0]
+    def simplify(self): return self
+    def copy(self): return CRnum(self.valueof())
+    def is_integer(self): return self.valueof().is_Integer
+    def is_zero(self): return self.valueof().is_zero
+    def is_one(self): return (self.valueof() -1).is_zero
 
     def crhash(self):
         h = hashlib.blake2b()
         h.update(b"CRnum")
         h.update(str(self.value).encode())
         return h.digest()
-        
-        
-
     
+    def walk_str(self, prefix="", terminal=True):
+        return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
 
 class CRsum(CR):
     def simplify(self):
-        result = self.copy()
-        j = len(result) - 1
-        #print('hi!')
-        #print(result.operands)
-        while len(result) > 0 and isinstance(result[-1], CRnum) and result[-1].is_zero():
-            result.pop()
-        if len(result) == 0:
+        j = len(self)-1
+        while j > 0 and isinstance(self[j], CRnum) and self[j].is_zero():
+            j -= 1
+        if j == 0:
             return CRnum(0)
-        else:
-            return result
-    
-    def crhash(self):
-        pass
-    
-    # no mutation happens by the time we call this 
-    def suffix_hash(self):
-        if hasattr(self,"suffix_hashes"):
-            return self.suffix_hashes
-        suffix_hashes = [None for i in range(len(self))]
-        prev = f"CRsum({self.order})".encode()
-        for i in range(len(self)):
-            h = hashlib.blake2b()
-            h.update(prev)
-            h.update(self[i].crhash())
-            h.update(struct.pack("i",len(object)-i-1))
-            suffix_hashes[-i-1] = h.digest()
-            prev = suffix_hashes[-i-1]
-        return suffix_hashes
+        new_operands = [self[i].copy() for i in range(j)]
+        return CRsum(new_operands, self.order)
         
-    
 
 class CRprod(CR):
     def simplify(self):
-        result = self.copy()
-        for i in range(len(result)):
-            if isinstance(result[i], CRnum) and result[i].is_zero():
-                break
-        while len(self) > i:
-            result.pop()
-        
-        if len(result) == 0:
-            return CRnum(0)
-
-    def correctP(self, newlength):
-        result = CRprod(self.order, newlength)
+        # first instance of 0, nothing beyond it will change
         for i in range(len(self)):
-            result[i] = self[i].copy()
-        for i in range(len(self),newlength):
-            result[i] = CRnum(1)
-        return result
+            if isinstance(self[i], CRnum) and self[i].is_zero():
+                break
+        while i > 0 and isinstance(self[i], CRnum) and self[i].is_one():
+            i -= 1
+        if i == 0:
+            return CRnum(1)
+        new_operands = [self[j].copy() for j in range(i)]
+        return CRprod(new_operands, self.order)
     
-class CRtrig(CR):
-    
-    def correctT(self, newlength):
-        result = type(self)(self.order, newlength*2)
-        for i in range(len(self)//2):
-            result[i] = self[i].copy()
-            result[i+newlength] = self[i+len(self)//2].copy()
+    def correctP(self, newlength):
+        new_operands = [self[i].copy() if i < len(self) else CRnum(1) for i in range(newlength)]
+        return CRprod(new_operands, self.order)
+
         
-        for i in range(len(self)//2, newlength):
-            result[i] = CRnum(0)
-            result[i+newlength] = CRnum(1)
-        return result
 
+class CRtrig(CR):
+    def correctT(self, newlength):
+        hl = len(self)//2
+        left = [self[i].copy() if i < hl else CRnum(0) for i in range(len(self))]
+        right = [self[i+hl].copy() if i < hl else CRnum(1) for i in range(len(self))]
+        new_operands = left+ right
+        return CRtrig(new_operands,self.order, self.crtype)
+    
     def simplify(self):
-        t = len(self)//2
-        if isinstance(self[0], CRnum) and self[0].is_zero() and isinstance(self[t],CRnum) and self[t].is_zero():
+        hl = len(self)//2
+        if isinstance(self[0],CRnum) and self[0].is_zero() and isinstance(self[hl],CRnum) and self[hl].is_zero():
             return CRnum(0)
-        return self.copy()
-
+        return self
+    
 class CRsin(CRtrig):
-    def valueof(self):
-        return self[0].valueof()
-
+    def valueof(self): return self.operands[0]
+    
 class CRcos(CRtrig):
-    def valueof(self):
-        return self[len(self)//2].valueof()
-
-class CRcot(CRtrig):
-    def valueof(self):
-        return self[len(self)//2].valueof()/self[0].valueof()
-
+    def valueof(self): return self.operands[len(self)//2]
+    
 class CRtan(CRtrig):
-    def valueof(self):
-        return self[0].valueof()/self[len(self)//2].valueof()
+    def valueof(self): return self.operands[0]/ self.operands[len(self)//2]
+    
+class CRcot(CRtrig):
+    def valueof(self): return  self.operands[len(self)//2]/ self.operands[0]
 
 class CRE(CR):
+    def realize(self): return [operand.valueof() for operand in self]
 
-    def __init__(self, l, r):
-        self.operands = [l,r]
-        self.order = max(l.order, r.order)
+class CREadd(CR):
+    def valueof(self): return sum(*self.realize())
+    
+class CREmul(CR):
+    def valueof(self): return mul(*self.realize())
+    
+class CREpow(CR):
+    def valueof(self): return pow(*self.realize())
 
-class CREadd(CRE):
-    
-    def valueof(self):
-        return self.operands[0].valueof() + self.operands[1].valueof()
+class CRElog(CR):
+    def valueof(self): return log(*self.realize())
 
-class CREmul(CRE): 
-    
-    def valueof(self):
-        return self.operands[0].valueof() * self.operands[1].valueof()
+class CREsin(CR):
+    def valueof(self): return sin(*self.realize())
 
-class CRElog(CRE):
-    
-    def valueof(self):
-        return log(self.operands[0].valueof(),self.operands[1].valueof())
+class CREcos(CR):
+    def valueof(self): return cos(*self.realize())
 
-class CREpow(CRE): 
-    # TODO: fix
-    
-    def valueof(self):
-        return self.operands[0].valueof() ** self.operands[1].valueof()
-    
-class CREtrig(CRE):
-    
-    def __init__(self, l):
-        self.operands = [l]
-        self.order = l.order
+class CREtan(CR):  
+    def valueof(self): return tan(*self.realize())
 
-class CREsin(CREtrig):
-    
-    def valueof(self):
-        return sin(self.operands[0])
+class CREcot(CR):
+    def valueof(self): return cot(*self.realize())
 
-class CREcos(CREtrig):
-    
-    def valueof(self):
-        return cos(self.operands[0])
-
-class CREtan(CREtrig):
-    
-    def valueof(self):
-        return tan(self.operands[0])
-
-
-class CREcot(CREtrig):
-    
-    def valueof(self):
-        return cot(self.operands[0])
 
 def sin(arg):
     if isinstance(arg, sympy.Expr):

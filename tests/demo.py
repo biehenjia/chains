@@ -5,8 +5,7 @@ expr = "log(x**3)+x**3"
 chain, symbol_table = pycr.chainify(expr)
 
 print(str(chain))
-with open("field.txt","w") as f:
-    f.write(str(chain))
+
 
 ir = pycr.IR(chain,symbol_table)
 

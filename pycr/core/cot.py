@@ -1,19 +1,16 @@
 from .cr import *
 
-@CRalgebra.defineDefault(TAN)
-def defaultTan(u):
-    return CREtan(u)
+@CRalgebra.defineDefault(COT)
+def defaultCot(u):
+    return CREcot(u)
 
-@CRalgebra.defineUnary(TAN, CRnum)
-def tanCRnum(u):
-    return CRnum(tan(u.valueof()))
+@CRalgebra.defineUnary(COT)
+def cotCRnum(u):
+    return CRnum(cot(u.valueof()))
 
-@CRalgebra.defineUnary(TAN, CRsum)
-def tanCRsum(u):
-    result = CRcot(len(u)*2)
-    for i in range(len(u)):
-        result[i] = tan(u[i])
-        result[i+len(u)] = tan(u[i+len(u)])
-    return result
+@CRalgebra.defineUnary(COT, CRsum)
+def cotCRsum(u):
+    new_operands = [sin(u[i]) if i < len(u) else cos(u[i]) for i in range(len(u)*2)]
+    return CRtan(new_operands,u.order)
 
 

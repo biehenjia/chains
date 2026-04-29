@@ -16,10 +16,8 @@ def mulCRnumCRnum(l: CRnum, r: CRnum):
 
 @CRalgebra.defineBinary(MUL, CRsum, CRnum, commutative=True)
 def mulCRsumCRnum(l: CRsum, r: CRnum):
-    result = l.copy()
-    for i in range(len(result)):
-        result[i] *= r
-    return result
+    operands = [l[i] * r for i in range(len(l))]
+    return CRsum(operands, l.order)
 
 @CRalgebra.defineBinary(MUL, CRsum, CRsum, commutative=True)
 def mulCRsumCRsum(l: CRsum, r: CRsum):
@@ -27,8 +25,8 @@ def mulCRsumCRsum(l: CRsum, r: CRsum):
         l, r = r,l
     n = len(l) - 1
     m = len(r) - 1
-    result = CRsum(l.order, n+m+1)
-    for i in range(len(result)):
+    operands = [None for i in range(len(l))]
+    for i in range(len(l)):
         r1 = CRnum(0)
         for j in range(max(0,i-m),min(i,n)+1):
             r2 = CRnum(0)
@@ -36,27 +34,26 @@ def mulCRsumCRsum(l: CRsum, r: CRsum):
                 r2 += CRnum(sympy.binomial(j,i-k)) * r[k]
             r2 *= CRnum(sympy.binomial(i,j))
             r1 += l[j] * r2
-        result[i] = r1
-    return result
+        operands[i] = r1
+    return operands
 
 @CRalgebra.defineBinary(MUL, CRprod, CRprod, commutative=True)
 def mulCRprodCRprod(l: CRprod, r: CRprod):
-    if len(r) > len(l):
-        l, r = r, l
-    result = l.copy()
-    for i in range(len(result)):
-        result[i] *= r[i]
-    return result
+    if len(r) > len(l): l, r = r, l
+    operands = [l[i] * r[i] if i < len(r) else l[i] for i in range(len(l))]
+    return CRprod(operands, l.order)
 
 @CRalgebra.defineBinary(MUL, CRprod, CRnum, commutative=True)
 def mulCRprodCRnum(l: CRprod, r: CRnum):
-    result = l.copy()
-    result[0] *= r
-    return result
+    operands = [l[i] for i in range(len(l))]
+    operands[0] *= r
+    return CRprod(operands, l.order)
+
+# CASES FOR SIN AND COS
 
 #TODO: fix mul case for 
 @CRalgebra.defineBinary(MUL, CRprod, CRcos, commutative=True)
-def mulCRprodCRtrig(l: CRprod, r: CRtrig):
+def mulCRprodCRtrig(l: CRprod, r: CRcos):
     if len(r)//2 > len(l):
         o1 = r
         o2 = l.correctP(len(r)//2)
@@ -69,15 +66,12 @@ def mulCRprodCRtrig(l: CRprod, r: CRtrig):
         o1 = r
         o2 = l
         newlength = len(r)//2
-    result = type(r)(r.order, newlength*2)
-    for i in range(newlength):
-        result[i] = o1[i] * o2[i]
-        result[i+newlength] = o1[i+newlength] * o2[i]
-    return result
+    new_operands = [o1[i]*o2[i] if i < newlength else o1[i+newlength] * o2[i] for i in range(newlength)]
+    return CRcos(new_operands,r.order)
 
 #TODO: fix mul case for 
 @CRalgebra.defineBinary(MUL, CRprod, CRsin, commutative=True)
-def mulCRprodCRtrig(l: CRprod, r: CRtrig):
+def mulCRprodCRtrig(l: CRprod, r: CRsin):
     if len(r)//2 > len(l):
         o1 = r
         o2 = l.correctP(len(r)//2)
@@ -90,26 +84,23 @@ def mulCRprodCRtrig(l: CRprod, r: CRtrig):
         o1 = r
         o2 = l
         newlength = len(r)//2
-    result = type(r)(r.order, newlength*2)
-    for i in range(newlength):
-        result[i] = o1[i] * o2[i]
-        result[i+newlength] = o1[i+newlength] * o2[i]
-    return result
+    
+    new_operands = [o1[i]*o2[i] if i < newlength else o1[i+newlength] * o2[i] for i in range(newlength)]
+    return CRcos(new_operands,r.order)
 
 @CRalgebra.defineBinary(MUL, CRsin, CRnum, commutative=True)
 def mulCRsinCRnum(l: CRsin, r: CRnum):
-    result = l.copy()
-    result[0] *= r
-    result[len(result)//2] *= r
-    return result
+    new_operands = [l[i] for i in range(len(l))]
+    new_operands[0] *= r
+    new_operands[len(l)//2] *= r
+    return CRsin(new_operands, l.order)
 
 @CRalgebra.defineBinary(MUL, CRcos, CRnum, commutative=True)
 def mulCRcosCRnum(l: CRcos, r: CRnum):
-    result = l.copy()
-    result[0] *= r
-    result[len(result)//2] *= r
-    return result
-
+    new_operands = [l[i] for i in range(len(l))]
+    new_operands[0] *= r
+    new_operands[len(l)//2] *= r
+    return CRcos(new_operands, l.order)
 
 
 # --- DEFAULTS ---
@@ -117,5 +108,5 @@ def mulCRcosCRnum(l: CRcos, r: CRnum):
 
 @CRalgebra.defineDefault(MUL)
 def defaultMul(l, r):
-    return CREmul(l,r )
+    return CREmul(l.copy(),r.copy() )
 

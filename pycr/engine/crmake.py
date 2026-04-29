@@ -12,10 +12,8 @@ def crmake(ASTnode, symbol_table):
         entry = symbol_table[ASTnode]
         order = entry['order']
         start,step = entry['params']
-
-        result = CRsum(order, 2)
-        result[0] = CRnum(start)
-        result[1] = CRnum(step)
+        operands = (CRnum(start), CRnum(step))
+        result = CRsum(operands, order)
 
         return result
     

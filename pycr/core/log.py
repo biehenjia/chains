@@ -6,11 +6,9 @@ def logCRnumCRnum(l: CRnum, r: CRnum):
 
 @CRalgebra.defineBinary(LOG, CRprod, CRnum)
 def logCRprodCRnum(l: CRprod, r: CRnum):
-    result = CRsum(l.order, len(l))
-    for i in range(len(result)):
-        result[i] = log(l[i], r)
-    return result
+    new_operands = [log(l[i], r) for i in range(len(l))]
+    return CRsum(new_operands, l.order)
 
 @CRalgebra.defineDefault(LOG)
 def logDefault(l: CR, r: CR):
-    return CRElog(l, r)
+    return CRElog(l.copy(), r.copy())

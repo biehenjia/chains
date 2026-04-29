@@ -6,13 +6,10 @@ def cosCRnum(u):
 
 @CRalgebra.defineUnary(COS, CRsum)
 def cosCRsum(u):
-    result = CRcos(order=u.order, length=len(u)*2)
-    for i in range(len(u)):
-        result[i] = sin(u[i])
-        result[i+len(u)] = cos(u[i])
-    return result
+    new_operands = [sin(u[i]) if i < len(u) else cos(u[i]) for i in range(len(u)*2)]
+    return CRcos(new_operands,u.order)
 
 @CRalgebra.defineDefault(COS)
 def defaultCos(u):
     # fallback 
-    return CREcos(u )
+    return CREcos(u.copy())

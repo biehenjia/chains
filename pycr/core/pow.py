@@ -43,36 +43,31 @@ def powCRsumCRnum(l: CRsum, r: CRnum):
 
 @CRalgebra.defineBinary(POW, CRnum, CRsum)
 def powCRnumCRsum(l: CRnum, r: CRsum):
-    result = CRprod(r.order, len(r))
-    for i in range(len(result)):
-        result[i] = l ** r[i]
-    return result
+    new_operands = [l ** r[i] for i in range(len(r))]
+    return CRprod(new_operands, r.order)
 
 @CRalgebra.defineBinary(POW, CRprod, CRnum)
 def powCRprodCRnum(l: CRprod, r: CRnum):
-    result = CRprod(l.order, len(l))
-    for i in range(len(result)):
-        result[i] = l[i] ** r
-    return result
+    new_operands = [l[i]** r for i in range(len(l))]
+    return CRprod(new_operands, l.order)
 
 @CRalgebra.defineBinary(POW, CRprod,CRsum)
 def powCRprodCRsum(l: CRprod, r: CRsum):
     n = max(len(l),len(r)) - 1
     m = min(len(l),len(r)) - 1
-    result = CRprod(l.order, n+m+1)
-    
-    for i in range(len(result)):
+    new_operands = [None for i in range(n+m+1)]
+    for i in range(len(new_operands)):
         r1 = CRnum(1)
         for j in range(max(0,i-m),min(i,n)+1):
             r2 = CRnum(1)
             for k in range(i-j,min(i,m)+1):
                 r2 *= l[j] ** r[k] * CRnum(sympy.binomial(j,i-k)*sympy.binomial(i,j))
             r1 *= r2
-        result[i] = r1
-    return result.simplify()
+        new_operands[i] = r1
+    return CRprod(new_operands, l.order)
 
 
 # --- DEFAULTS ---
 @CRalgebra.defineDefault(POW)
 def defaultPow(l, r):
-    return CREpow(l,r )
+    return CREpow(l.copy(),r.copy() )
