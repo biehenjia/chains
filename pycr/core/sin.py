@@ -13,7 +13,7 @@ def sinCRsum(u):
 @CRalgebra.defineDefault(SIN)
 def defaultSin(u):
     # fallback 
-    return CREsin(u.copy())
+    return CREsin([u.copy()],u.order)
 
 
 

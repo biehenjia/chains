@@ -19,7 +19,7 @@ def addCRsumCRsum(l: CRsum, r: CRsum):
 
 @CRalgebra.defineDefault(ADD)
 def defaultAdd(l, r):
-    return CREadd([l.copy(),r.copy()])
+    return CREadd([l.copy(), r.copy()], max(l.order,r.order))
 
 
 

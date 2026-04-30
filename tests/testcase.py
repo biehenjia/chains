@@ -38,8 +38,6 @@ class Testcase:
     def compile_prange(self, n):
         index = ','.join(self.symbols)
         inner = dsl.s(f"A[{index}] = {self.expr}")
-        
-
         for i in range(len(self.symbols)-1):
             outer = dsl.Block()
             outer.for_range(self.symbols[i],n,inner)

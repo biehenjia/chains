@@ -21,6 +21,7 @@ def powCRnumCRnum(l: CRnum, r: CRnum):
 
 @CRalgebra.defineBinary(POW, CRsum, CRnum)
 def powCRsumCRnum(l: CRsum, r: CRnum):
+
     if r.is_integer():
         result = CRnum(1)
         if r.valueof() >= 0:
@@ -29,8 +30,9 @@ def powCRsumCRnum(l: CRsum, r: CRnum):
             while v > 0:
                 if v & 1:
                     result *= base
-                v >>= 1 
-                base *= base
+                v >>= 1
+                if v > 0:
+                    base *= base
             return result
 
         else:
@@ -70,4 +72,4 @@ def powCRprodCRsum(l: CRprod, r: CRsum):
 # --- DEFAULTS ---
 @CRalgebra.defineDefault(POW)
 def defaultPow(l, r):
-    return CREpow(l.copy(),r.copy() )
+    return CREpow([l.copy(), r.copy()], max(l.order,r.order))

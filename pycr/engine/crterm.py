@@ -6,10 +6,6 @@ Given an expression, and that we have already constructed the corresponding chai
     1. To remove commmon subchains from the chain of recurrence
     2. To construct a minimal "tape" and set of rules
 
-
-'''
-
-'''
 Computation graph of CRterm
 
     1. convert CR into CRterm
@@ -63,7 +59,6 @@ class CRterm:
                 
                 # DONT DO UPDATES UNTIL AFTER CSE. THEN, WE CAN DO LAST INDEX AS THE WRITE REGISTER.
 
-
     def postorder(self):
         if not isinstance(self.cr, CRnum):
             for t in self.operands:
@@ -73,7 +68,6 @@ class CRterm:
     def crdigest(self):
         if self.digests:
             return self.digests[0]
-        
 
         if isinstance(self.cr, CRnum):
             h = PROTOCOL(digest_size=16)

@@ -16,6 +16,7 @@ def mulCRnumCRnum(l: CRnum, r: CRnum):
 
 @CRalgebra.defineBinary(MUL, CRsum, CRnum, commutative=True)
 def mulCRsumCRnum(l: CRsum, r: CRnum):
+
     operands = [l[i] * r for i in range(len(l))]
     return CRsum(operands, l.order)
 
@@ -25,17 +26,18 @@ def mulCRsumCRsum(l: CRsum, r: CRsum):
         l, r = r,l
     n = len(l) - 1
     m = len(r) - 1
-    operands = [None for i in range(len(l))]
-    for i in range(len(l)):
+    operands = [None for i in range(n+m+1)]
+    for i in range(n+m+1):
         r1 = CRnum(0)
         for j in range(max(0,i-m),min(i,n)+1):
             r2 = CRnum(0)
             for k in range(i-j,min(i,m)+1):
                 r2 += CRnum(sympy.binomial(j,i-k)) * r[k]
             r2 *= CRnum(sympy.binomial(i,j))
+
             r1 += l[j] * r2
         operands[i] = r1
-    return operands
+    return CRsum(operands, l.order)
 
 @CRalgebra.defineBinary(MUL, CRprod, CRprod, commutative=True)
 def mulCRprodCRprod(l: CRprod, r: CRprod):
@@ -108,5 +110,5 @@ def mulCRcosCRnum(l: CRcos, r: CRnum):
 
 @CRalgebra.defineDefault(MUL)
 def defaultMul(l, r):
-    return CREmul(l.copy(),r.copy() )
+    return CREmul([l.copy(), r.copy()], max(l.order,r.order))
 

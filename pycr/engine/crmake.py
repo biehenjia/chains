@@ -3,18 +3,15 @@ import sympy
 from ..core import *
 
 def crmake(ASTnode, symbol_table):
-
     if isinstance(ASTnode, sympy.Number):
         return CRnum(ASTnode)
     
     elif isinstance(ASTnode, sympy.Symbol):
-        
         entry = symbol_table[ASTnode]
         order = entry['order']
         start,step = entry['params']
-        operands = (CRnum(start), CRnum(step))
+        operands = [CRnum(start), CRnum(step)]
         result = CRsum(operands, order)
-
         return result
     
     elif isinstance(ASTnode, sympy.Add):

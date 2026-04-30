@@ -12,4 +12,4 @@ def cosCRsum(u):
 @CRalgebra.defineDefault(COS)
 def defaultCos(u):
     # fallback 
-    return CREcos(u.copy())
+    return CREcos([u.copy()],u.order)

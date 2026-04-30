@@ -2,7 +2,7 @@ from .cr import *
 
 @CRalgebra.defineDefault(COT)
 def defaultCot(u):
-    return CREcot(u)
+    return CREcot([u.copy()],u.order)
 
 @CRalgebra.defineUnary(COT)
 def cotCRnum(u):

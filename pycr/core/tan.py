@@ -13,7 +13,7 @@ def tanCRsum(u):
 @CRalgebra.defineDefault(TAN)
 def defaultTan(u):
     # fallback 
-    return CREtan(u.copy())
+    return CREtan([u.copy()],u.order)
 
 
 

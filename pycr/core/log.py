@@ -11,4 +11,4 @@ def logCRprodCRnum(l: CRprod, r: CRnum):
 
 @CRalgebra.defineDefault(LOG)
 def logDefault(l: CR, r: CR):
-    return CRElog(l.copy(), r.copy())
+    return CRElog([l.copy(), r.copy()], max(l.order,r.order))

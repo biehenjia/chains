@@ -12,16 +12,13 @@ class IR:
         self.tape = [] # contiguous tape
         self.orders = []
 
-        
     def postorder(self):
         return self.cr.postorder()
     
-
     # fix later
     def cse(self):
         pass
     
-
     def seed(self, st):
         self.st = st
     

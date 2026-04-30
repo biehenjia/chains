@@ -1,19 +1,12 @@
 import sympy, hashlib, struct
 from .algebra import *
 from operator import add, mul, pow
-
 CRalgebra = Algebra()
-
 
 class CR:
     def __init__(self, operands, order): 
         self.operands = operands
         self.order = order
-
-    def __post_init__(self):
-        # construct hash
-        # selfsimplify
-        pass
 
     def __len__(self): return len(self.operands) 
     def __getitem__(self, key): return self.operands[key]
@@ -27,7 +20,20 @@ class CR:
         new_operands = [self[i].copy() for i in range(len(self))]
         return type(self)(new_operands, self.order)
     
+    def isnumber(self):
+        return False
+
+    def seeded(self, symbol_table):
+        return type(self)([self[i].seeded(symbol_table) for i in range(len(self))], self.order)            
+
+            
+    
     def __add__(self,target):
+        if isinstance(self.order, CRnum) or isinstance(target.order,  CRnum):
+            print(self.order)
+            print(target.order)
+            print(self)
+            print(target)
         if self.order > target.order:
             key = (type(self), CRnum)
         elif self.order < target.order:
@@ -77,31 +83,64 @@ class CR:
     
     def valueof(self):
         return self[0].valueof()
+    
+    def _suffixhash(self):
+        # works for both CRsum and CRprod types
+        # need to account for the same order
+        # should also just work with the CRE types
+        prev = f"{type(self)}({self.order})".encode()
+        suffix_hashes = [None for i in range(len(self))]
+        for i in range(len(self)):
+            h = hashlib.blake2b()
+            h.update(prev)
+            h.update(self[-i-1].crhash())
+            h.update(struct.pack("i",i))
+            suffix_hashes[-i-1] = h.digest()
+            prev = suffix_hashes[-i-1]
+        return suffix_hashes
+        
+    
+    def crhash(self):
+        if not hasattr(self, "suffix_hashes"):
+            self.suffix_hashes = self._suffixhash()
+        return self.suffix_hashes[0]
 
 class CRnum(CR):
+
     def __init__(self, value):
         if not isinstance(value, sympy.Symbol):
-            self.value = (sympy.S(str(value), rational=True),)
+            self.value = sympy.S(str(value), rational=True)
         else:
-            self.value = (value,)
+            self.value = value
         self.order = -1
+    
+    def seeded(self, table):
+        return CRnum(self.value.subs(table))
+
+
 
     def postorder(self): yield self
-    def valueof(self): return self.value[0]
+    def valueof(self): return self.value
     def simplify(self): return self
     def copy(self): return CRnum(self.valueof())
     def is_integer(self): return self.valueof().is_Integer
     def is_zero(self): return self.valueof().is_zero
     def is_one(self): return (self.valueof() -1).is_zero
+    def isnumber(self): return True
 
-    def crhash(self):
-        h = hashlib.blake2b()
-        h.update(b"CRnum")
-        h.update(str(self.value).encode())
-        return h.digest()
+
     
     def walk_str(self, prefix="", terminal=True):
         return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
+
+    def __str__(self):
+        return f"CRnum({self.value})"
+    
+    def _suffixhash(self):
+        h = hashlib.blake2b()
+        h.update(b"CRnum")
+        h.update(sympy.srepr(self.value).encode())
+        return [h.digest()]
 
 class CRsum(CR):
     def simplify(self):
@@ -112,7 +151,8 @@ class CRsum(CR):
             return CRnum(0)
         new_operands = [self[i].copy() for i in range(j)]
         return CRsum(new_operands, self.order)
-        
+    
+    
 
 class CRprod(CR):
     def simplify(self):
@@ -147,6 +187,21 @@ class CRtrig(CR):
             return CRnum(0)
         return self
     
+    def _suffixhash(self):
+        prev = f"{type(self)}({self.order})".encode()
+        suffix_hashes = [None for i in range(len(self)//2)]
+        for i in range(len(self)//2):
+            h = hashlib.blake2b()
+            h.update(prev)
+            h.update(self[-i-1].crhash())
+            h.update(self[len(self)//2-i-1].crhash())
+            h.update(struct.pack("i", i))
+            suffix_hashes[len(self)//2 -i- 1] = h.digest()
+            prev = suffix_hashes[len(self)//2-i-1]
+        return suffix_hashes
+
+
+    
 class CRsin(CRtrig):
     def valueof(self): return self.operands[0]
     
@@ -162,29 +217,32 @@ class CRcot(CRtrig):
 class CRE(CR):
     def realize(self): return [operand.valueof() for operand in self]
 
-class CREadd(CR):
-    def valueof(self): return sum(*self.realize())
+class CREadd(CRE):
+    def valueof(self): return add(*(self.realize()))
     
-class CREmul(CR):
-    def valueof(self): return mul(*self.realize())
+class CREmul(CRE):
+    def valueof(self): return mul(*(self.realize()))
     
-class CREpow(CR):
-    def valueof(self): return pow(*self.realize())
+class CREpow(CRE):
+    def valueof(self): return pow(*(self.realize()))
 
-class CRElog(CR):
-    def valueof(self): return log(*self.realize())
+class CRElog(CRE):
+    def valueof(self): return log(*(self.realize()))
 
-class CREsin(CR):
-    def valueof(self): return sin(*self.realize())
+class CREsin(CRE):
+    def valueof(self): return sin(*(self.realize()))
 
-class CREcos(CR):
-    def valueof(self): return cos(*self.realize())
+class CREcos(CRE):
+    def valueof(self): return cos(*(self.realize()))
 
-class CREtan(CR):  
-    def valueof(self): return tan(*self.realize())
+class CREtan(CRE):  
+    def valueof(self): return tan(*(self.realize()))
 
-class CREcot(CR):
-    def valueof(self): return cot(*self.realize())
+class CREcot(CRE):
+    def valueof(self): return cot(*(self.realize()))
+
+class CREcopy(CRE):
+    pass
 
 
 def sin(arg):
