@@ -29,11 +29,7 @@ class CR:
             
     
     def __add__(self,target):
-        if isinstance(self.order, CRnum) or isinstance(target.order,  CRnum):
-            print(self.order)
-            print(target.order)
-            print(self)
-            print(target)
+
         if self.order > target.order:
             key = (type(self), CRnum)
         elif self.order < target.order:
@@ -179,7 +175,7 @@ class CRtrig(CR):
         left = [self[i].copy() if i < hl else CRnum(0) for i in range(len(self))]
         right = [self[i+hl].copy() if i < hl else CRnum(1) for i in range(len(self))]
         new_operands = left+ right
-        return CRtrig(new_operands,self.order, self.crtype)
+        return CRtrig(new_operands,self.order)
     
     def simplify(self):
         hl = len(self)//2
@@ -188,7 +184,7 @@ class CRtrig(CR):
         return self
     
     def _suffixhash(self):
-        prev = f"{type(self)}({self.order})".encode()
+        prev = f"{CRtrig.__name__}({self.order})".encode()
         suffix_hashes = [None for i in range(len(self)//2)]
         for i in range(len(self)//2):
             h = hashlib.blake2b()
@@ -203,16 +199,16 @@ class CRtrig(CR):
 
     
 class CRsin(CRtrig):
-    def valueof(self): return self.operands[0]
+    def valueof(self): return self.operands[0].valueof()
     
 class CRcos(CRtrig):
-    def valueof(self): return self.operands[len(self)//2]
+    def valueof(self): return self.operands[len(self)//2].valueof()
     
 class CRtan(CRtrig):
-    def valueof(self): return self.operands[0]/ self.operands[len(self)//2]
+    def valueof(self): return self.operands[0].valueof()/ self.operands[len(self)//2].valueof()
     
 class CRcot(CRtrig):
-    def valueof(self): return  self.operands[len(self)//2]/ self.operands[0]
+    def valueof(self): return  self.operands[len(self)//2].valueof()/ self.operands[0].valueof()
 
 class CRE(CR):
     def realize(self): return [operand.valueof() for operand in self]

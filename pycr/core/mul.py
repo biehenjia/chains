@@ -68,7 +68,7 @@ def mulCRprodCRtrig(l: CRprod, r: CRcos):
         o1 = r
         o2 = l
         newlength = len(r)//2
-    new_operands = [o1[i]*o2[i] if i < newlength else o1[i+newlength] * o2[i] for i in range(newlength)]
+    new_operands = [o1[i]*o2[i] if i < newlength else o1[i] * o2[i-newlength] for i in range(newlength*2)]
     return CRcos(new_operands,r.order)
 
 #TODO: fix mul case for 
@@ -87,8 +87,8 @@ def mulCRprodCRtrig(l: CRprod, r: CRsin):
         o2 = l
         newlength = len(r)//2
     
-    new_operands = [o1[i]*o2[i] if i < newlength else o1[i+newlength] * o2[i] for i in range(newlength)]
-    return CRcos(new_operands,r.order)
+    new_operands = [o1[i]*o2[i] if i < newlength else o1[i] * o2[i-newlength] for i in range(newlength*2)]
+    return CRsin(new_operands,r.order)
 
 @CRalgebra.defineBinary(MUL, CRsin, CRnum, commutative=True)
 def mulCRsinCRnum(l: CRsin, r: CRnum):

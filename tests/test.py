@@ -2,6 +2,7 @@ import testcase, numpy
 from bench import benchmark
 import json
 m = {}
+
 with open("equations.txt","r") as f:
 
     for l in f.readlines():
@@ -13,16 +14,9 @@ with open("equations.txt","r") as f:
 
         for method in funcs:
             thing = funcs[method]
-            print(method)
-            
-            
             thing(A)
         m[l] = results
         print(f"done {l}")
 
 with open("r.txt","w") as f:
     f.write(json.dumps(m,indent=4))
-
-
-
-        

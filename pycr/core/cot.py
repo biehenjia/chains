@@ -10,7 +10,7 @@ def cotCRnum(u):
 
 @CRalgebra.defineUnary(COT, CRsum)
 def cotCRsum(u):
-    new_operands = [sin(u[i]) if i < len(u) else cos(u[i]) for i in range(len(u)*2)]
+    new_operands = [sin(u[i]) if i < len(u) else cos(u[i-len(u)]) for i in range(len(u)*2)]
     return CRtan(new_operands,u.order)
 
 

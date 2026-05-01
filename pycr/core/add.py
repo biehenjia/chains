@@ -6,6 +6,7 @@ def addCRnumCRnum(l: CRnum, r: CRnum):
 
 @CRalgebra.defineBinary(ADD, CRsum, CRnum, commutative=True)
 def addCRsumCRnum(l: CRsum, r: CRnum):
+
     new_operands = [l[i] for i in range(len(l))]
     new_operands[0] += r
     return CRsum(new_operands, l.order)

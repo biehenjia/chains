@@ -22,7 +22,7 @@ chainhashes = chain2._suffixhash()
 
 for a in sh1:
     for b in chainhashes:
-        print(a== b)
+        print(a == b)
 
 # ir = pycr.IR(chain,symbol_table)
 # G = pycr.Generator(ir)
