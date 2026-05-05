@@ -1,6 +1,5 @@
 import sympy
 
-sympy.parsing 
 
 # TODO: error reduction
 

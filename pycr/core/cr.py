@@ -197,6 +197,7 @@ class CRtrig(CR):
         return suffix_hashes
 
 
+
     
 class CRsin(CRtrig):
     def valueof(self): return self.operands[0].valueof()
@@ -213,6 +214,8 @@ class CRcot(CRtrig):
 class CRE(CR):
     def realize(self): return [operand.valueof() for operand in self]
 
+
+# necessary?? already in position to use ops table + lambda/f lookup
 class CREadd(CRE):
     def valueof(self): return add(*(self.realize()))
     

@@ -8,6 +8,7 @@ f64_ptr = ir.PointerType(f64)
 def generate(ir_object):
     ir_object.prepare()
 
+    # technically, we should already be seeded so its just a matter of ordering.
     n_dims = len(ir_object.st)
     # results array,
     arg_types = [f64_ptr] + [f64] * (2*n_dims) + [i64]* n_dims

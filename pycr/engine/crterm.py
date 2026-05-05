@@ -8,18 +8,35 @@ metadata about the CR before we convert it it into the relevant code generation
 Essentially their only purpose is to codegen
 
 ''' 
-
+# use duck typing
+# 
 class CRconnector:
     
     # the index will be found at the same distance from the tail
     def __init__(self, source, target, index=0):
         pass
 
+    def shift(self):
+        pass
+
+
+
+# wraps the root of a CR node that we will be working with
+"""
+RESPONSABILITIES:
+
+- owns root of CR node
+- holds partition information, i.e., ordering
+- holds bounds information (? can be stateless)
+
+
+"""
 class CRterm:
-    def __init__(self,cr):
+    def __init__(self,cr, symbol_table = None):
         self.cr = cr
-        # start with default truncation
-        self.trunc = len(cr)
+        # no need for truncation
+        self.symbol_table = symbol_table
+
 
 # TODO: conver to class function in CRterm. 
 # pattern: 

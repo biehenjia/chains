@@ -1,5 +1,5 @@
 import sympy, numba, numpy, numexpr, ast, pycr, inspect
-from pycr.codegen import dsl 
+from pycr.codegen import api 
 from bench import benchmark
 
 class Testcase:
@@ -11,16 +11,16 @@ class Testcase:
 
     def compile_scalar(self, n):
         index = ','.join(self.symbols)
-        inner = dsl.s(f"A[{index}] = {self.expr}")
+        inner = api.s(f"A[{index}] = {self.expr}")
         
         for i in range(len(self.symbols)):
-            outer = dsl.Block()
+            outer = api.Block()
             outer.for_range(self.symbols[i],n,inner)
             inner = outer
         
-        tree = dsl.mod(dsl.fn("generated",["A"], inner.stmts ),numpy=False)
+        tree = api.mod(api.fn("generated",["A"], inner.stmts ),numpy=False)
         ast.fix_missing_locations(tree)
-        return dsl.compile_ast(tree)
+        return api.compile_ast(tree)
     
     def compile_numba(self, n):
         return numba.njit(self.compile_scalar(n))
@@ -37,17 +37,17 @@ class Testcase:
     
     def compile_prange(self, n):
         index = ','.join(self.symbols)
-        inner = dsl.s(f"A[{index}] = {self.expr}")
+        inner = api.s(f"A[{index}] = {self.expr}")
         for i in range(len(self.symbols)-1):
-            outer = dsl.Block()
+            outer = api.Block()
             outer.for_range(self.symbols[i],n,inner)
             inner = outer
-        block = dsl.Block()
+        block = api.Block()
         block.for_range(self.symbols[-1],n,inner, range="prange")
-        tree = dsl.mod(dsl.fn("generated",["A"], block.stmts ),numpy=False)
+        tree = api.mod(api.fn("generated",["A"], block.stmts ),numpy=False)
         print(ast.unparse(tree))
         ast.fix_missing_locations(tree)
-        return numba.njit(dsl.compile_ast(tree),parallel=True)
+        return numba.njit(api.compile_ast(tree),parallel=True)
 
     def compile_numexpr(self, n ):
         grids = {s: numpy.arange(n) for s in self.symbols}  # 1D, not meshgrid
