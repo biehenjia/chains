@@ -23,6 +23,7 @@ class CR:
     def isnumber(self):
         return False
 
+    # returns a copy of the cr but elements are replaced with realized values
     def seeded(self, symbol_table):
         return type(self)([self[i].seeded(symbol_table) for i in range(len(self))], self.order)            
 
@@ -198,6 +199,7 @@ class CRtrig(CR):
 
 
 
+
     
 class CRsin(CRtrig):
     def valueof(self): return self.operands[0].valueof()
@@ -240,9 +242,15 @@ class CREtan(CRE):
 class CREcot(CRE):
     def valueof(self): return cot(*(self.realize()))
 
-class CREcopy(CRE):
-    pass
+# shouldn't even have a source. It will be a child node of a CRobject
+class CREconnector(CRE):
+    
+    def __init__(self, source, index = 0):
+        self.source = source
+        self.index = index
 
+    def valueof(self):
+        return self.source[self.index].valueof()
 
 def sin(arg):
     if isinstance(arg, sympy.Expr):

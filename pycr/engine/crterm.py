@@ -9,15 +9,7 @@ Essentially their only purpose is to codegen
 
 ''' 
 # use duck typing
-# 
-class CRconnector:
-    
-    # the index will be found at the same distance from the tail
-    def __init__(self, source, target, index=0):
-        pass
 
-    def shift(self):
-        pass
 
 
 
@@ -32,14 +24,52 @@ RESPONSABILITIES:
 
 """
 class CRterm:
+    cr: CR
+
     def __init__(self,cr, symbol_table = None):
         self.cr = cr
+
+        # hold original cr, but we can perform CSE or transformations on a temporary copy
+        self.cse_cr = cr
         # no need for truncation
+        # purpose of symbol table here is to seed the CR when we need it.
+        # we construct a temporary CR and seed it with values
         self.symbol_table = symbol_table
 
+        # after seeding, we hold the partitions of the CR.
+        # we separate the entire tree into different CRs where each CR
+        # pertains to a different order. 
+        self.orders = []
+        # the register tape of each of the leaf nodes in the CR tree.
+        self.tape = []
 
-# TODO: conver to class function in CRterm. 
-# pattern: 
+    def prepare(self):
+        # partitions the orders, produces the tape, evaluates floats
+        # everything before generating the code. 
+        pass
+
+    def partition_orders(self):
+        # root will have highest order
+        n_orders = self.cr.order
+        self.orders = [[] for i in range(n_orders)]
+        for member in self.cr.postorder():
+            member_order = member.order
+            self.orders[member_order].append()
+
+    def construct_tape(self):
+        pass
+
+    def evaluate_tape(self):
+        pass
+    
+    # todo:
+    # move these
+
+
+def cse(table, cr: CR):
+    pass
+
+
 def intern(table, cr: CR):
     if isinstance(cr, CRnum):
         return cr
@@ -47,22 +77,24 @@ def intern(table, cr: CR):
     crhash = cr.crhash()
     suffixes = cr._suffixhash()
     if crhash in table:
-        original_cr = table[crhash] # original crhash location
-        return CRconnector(original_cr, cr)
+        original_cr = table[crhash]
+        return CREconnector(original_cr)
     else:
         table[crhash] = cr
-    
-    for i in range(1, len(cr)-1):
+
+
+    for i in range(1,  len(cr)-1):
         if suffixes[i] in table:
-            # cant use negative indexing:must be objectively at len(cr)-i-1
-            # i think... 
-            return CRconnector(table[suffixes[i]], cr, len(cr)-i-1)
+            if isinstance(cr, CRtrig):
+                hl = len(cr) //2
+                operands = [cr[j].copy() for j in range(i-1)] + [CREconnector(original_cr, i)] + [cr[j+hl] for j in range(i-1)] + [ CREconnector(original_cr, i+hl)]
+            else:
+                operands = [cr[j].copy() for j in range(i-1)]
+                operands.append(CREconnector(original_cr, i))
         
-    # no match found
+        return type(cr)(operands, cr.order)
+    
     return cr
 
-# accepts root of the CR tree and partitions all subtree nodes into their
-# respective orders
-def partition_ordering(root):
-    pass
+
 

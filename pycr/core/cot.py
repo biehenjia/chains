@@ -4,9 +4,11 @@ from .cr import *
 def defaultCot(u):
     return CREcot([u.copy()],u.order)
 
+
 @CRalgebra.defineUnary(COT)
 def cotCRnum(u):
     return CRnum(cot(u.valueof()))
+
 
 @CRalgebra.defineUnary(COT, CRsum)
 def cotCRsum(u):
