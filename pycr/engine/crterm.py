@@ -67,13 +67,18 @@ class CRterm:
 
 
 def cse(table, cr: CR):
-    pass
+    if isinstance(cr, CRnum):
+        return cr
+    operands = [cse(operand) for operand in cr]
+    copy = type(cr)(operands, cr.order)
+    return intern(table, copy)
+
+
 
 
 def intern(table, cr: CR):
     if isinstance(cr, CRnum):
         return cr
-    
     crhash = cr.crhash()
     suffixes = cr._suffixhash()
     if crhash in table:
@@ -81,20 +86,17 @@ def intern(table, cr: CR):
         return CREconnector(original_cr)
     else:
         table[crhash] = cr
-
-
     for i in range(1,  len(cr)-1):
         if suffixes[i] in table:
+            original_cr = table[suffixes[i]]
             if isinstance(cr, CRtrig):
                 hl = len(cr) //2
-                operands = [cr[j].copy() for j in range(i-1)] + [CREconnector(original_cr, i)] + [cr[j+hl] for j in range(i-1)] + [ CREconnector(original_cr, i+hl)]
+                operands = [cr[j].copy() for j in range(i)] + [CREconnector(original_cr, i)] + [cr[j+hl] for j in range(i)] + [ CREconnector(original_cr, i+hl)]
             else:
-                operands = [cr[j].copy() for j in range(i-1)]
+                operands = [cr[j].copy() for j in range(i)]
                 operands.append(CREconnector(original_cr, i))
-        
-        return type(cr)(operands, cr.order)
-    
+            return type(cr)(operands, cr.order)
+        else:
+            table[suffixes[i]] = cr
     return cr
-
-
 

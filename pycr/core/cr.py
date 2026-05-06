@@ -91,7 +91,7 @@ class CR:
             h = hashlib.blake2b()
             h.update(prev)
             h.update(self[-i-1].crhash())
-            h.update(struct.pack("i",i))
+            h.update(b"|")
             suffix_hashes[-i-1] = h.digest()
             prev = suffix_hashes[-i-1]
         return suffix_hashes
@@ -192,7 +192,7 @@ class CRtrig(CR):
             h.update(prev)
             h.update(self[-i-1].crhash())
             h.update(self[len(self)//2-i-1].crhash())
-            h.update(struct.pack("i", i))
+            h.update(b"|")
             suffix_hashes[len(self)//2 -i- 1] = h.digest()
             prev = suffix_hashes[len(self)//2-i-1]
         return suffix_hashes
@@ -251,6 +251,11 @@ class CREconnector(CRE):
 
     def valueof(self):
         return self.source[self.index].valueof()
+    
+    def crhash(self):
+        if not hasattr(self.source, "suffix_hashes"):
+            self.source.suffix_hashes = self.source._suffixhash()
+        return self.source.suffix_hashes[self.index] 
 
 def sin(arg):
     if isinstance(arg, sympy.Expr):

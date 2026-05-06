@@ -19,14 +19,3 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-    "pyright>=1.1.409",
-]
-
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
-pythonVersion = "3.12"
-typeCheckingMode = "basic"
-
-optional-dependencies = {  }
