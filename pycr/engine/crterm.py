@@ -69,7 +69,7 @@ class CRterm:
 def cse(table, cr: CR):
     if isinstance(cr, CRnum):
         return cr
-    operands = [cse(operand) for operand in cr]
+    operands = [cse(table, operand) for operand in cr]
     copy = type(cr)(operands, cr.order)
     return intern(table, copy)
 
@@ -83,20 +83,33 @@ def intern(table, cr: CR):
     suffixes = cr._suffixhash()
     if crhash in table:
         original_cr = table[crhash]
+        # if type mismatch in the trig case then we can still connect
+        # construct new CR in the place of it with proper values 
         return CREconnector(original_cr)
     else:
         table[crhash] = cr
-    for i in range(1,  len(cr)-1):
-        if suffixes[i] in table:
-            original_cr = table[suffixes[i]]
-            if isinstance(cr, CRtrig):
-                hl = len(cr) //2
-                operands = [cr[j].copy() for j in range(i)] + [CREconnector(original_cr, i)] + [cr[j+hl] for j in range(i)] + [ CREconnector(original_cr, i+hl)]
+    if isinstance(cr, CRtrig):
+        hl = len(cr)//2
+        for i in range(1, hl- 1):
+            if suffixes[i] in table:
+                original_cr = table[suffixes[i]]
+                operands = [cr[j].copy() for j in range(i)]
+                operands += [CREconnector(original_cr,i )]
+                operands +=[cr[j+hl] for j in range(i)]
+                operands += [CREconnector(original_cr,i+hl)]
+                return CRtrig(operands, cr.order)
             else:
+                table[suffixes[i]] = cr
+                pass
+        return cr 
+    # CRsum, CRprod case
+    else:
+        for i in range(1, len(cr)-1):
+            if suffixes[i] in table:
                 operands = [cr[j].copy() for j in range(i)]
                 operands.append(CREconnector(original_cr, i))
-            return type(cr)(operands, cr.order)
-        else:
-            table[suffixes[i]] = cr
+                return type(cr)(operands, cr.order)
+            else:
+                table[suffixes[i]] = cr
+    
     return cr
-

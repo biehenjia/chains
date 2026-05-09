@@ -3,8 +3,8 @@
 # we construct the CR tree, 
 
 from .crmake import *
-# from .crterm import *
-from .irnode import *
+from .crterm import *
 
-__all__ = ['crmake', 'IR']
+
+__all__ = ['crmake', 'CRterm', 'cse']
 

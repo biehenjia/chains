@@ -246,16 +246,17 @@ class CREcot(CRE):
 class CREconnector(CRE):
     
     def __init__(self, source, index = 0):
-        self.source = source
+        self.operands = [source]
         self.index = index
+        self.order = source.order
 
     def valueof(self):
-        return self.source[self.index].valueof()
+        return self.operands[0][self.index].valueof()
     
     def crhash(self):
-        if not hasattr(self.source, "suffix_hashes"):
-            self.source.suffix_hashes = self.source._suffixhash()
-        return self.source.suffix_hashes[self.index] 
+        if not hasattr(self.operands[0], "suffix_hashes"):
+            self.operands[0].suffix_hashes = self.operands[0]._suffixhash()
+        return self.operands[0].suffix_hashes[self.index] 
 
 def sin(arg):
     if isinstance(arg, sympy.Expr):
