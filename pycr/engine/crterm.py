@@ -20,9 +20,8 @@ RESPONSABILITIES:
 - owns root of CR node
 - holds partition information, i.e., ordering
 - holds bounds information (? can be stateless)
-
-
 """
+
 class CRterm:
     cr: CR
 
@@ -85,6 +84,10 @@ def intern(table, cr: CR):
         original_cr = table[crhash]
         # if type mismatch in the trig case then we can still connect
         # construct new CR in the place of it with proper values 
+        
+        
+        # current issue: CRE connector will match all trig types
+        # work is reused, but we want to maintain the grab index
         return CREconnector(original_cr)
     else:
         table[crhash] = cr

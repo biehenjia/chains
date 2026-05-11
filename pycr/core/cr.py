@@ -249,6 +249,7 @@ class CREconnector(CRE):
         self.operands = [source]
         self.index = index
         self.order = source.order
+        self.f_valueof = None
 
     def valueof(self):
         return self.operands[0][self.index].valueof()
