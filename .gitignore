@@ -1,6 +1,9 @@
 .DS_Store
 
-
+*.
+!.gitignore
+!.devcontainer
+!.workflows
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

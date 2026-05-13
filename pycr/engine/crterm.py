@@ -9,10 +9,6 @@ Essentially their only purpose is to codegen
 
 ''' 
 # use duck typing
-
-
-
-
 # wraps the root of a CR node that we will be working with
 """
 RESPONSABILITIES:
@@ -25,7 +21,7 @@ RESPONSABILITIES:
 class CRterm:
     cr: CR
 
-    def __init__(self,cr, symbol_table = None):
+    def __init__(self,cr):
         self.cr = cr
 
         # hold original cr, but we can perform CSE or transformations on a temporary copy
@@ -33,7 +29,6 @@ class CRterm:
         # no need for truncation
         # purpose of symbol table here is to seed the CR when we need it.
         # we construct a temporary CR and seed it with values
-        self.symbol_table = symbol_table
 
         # after seeding, we hold the partitions of the CR.
         # we separate the entire tree into different CRs where each CR
@@ -43,23 +38,38 @@ class CRterm:
         self.tape = []
 
     def prepare(self):
-        # partitions the orders, produces the tape, evaluates floats
-        # everything before generating the code. 
+        total_length = self.align_starts()
+        self.construct_tape(total_length)
+        self.partition_orders()
         pass
 
     def partition_orders(self):
         # root will have highest order
         n_orders = self.cr.order
-        self.orders = [[] for i in range(n_orders)]
+        self.orders = [[] for i in range(n_orders+1)]
         for member in self.cr.postorder():
+            if isinstance(member, CRnum):
+                continue
             member_order = member.order
-            self.orders[member_order].append()
+            self.orders[member_order].append(member)
 
-    def construct_tape(self):
-        pass
+    def construct_tape(self, total_length):
+        
+        p = list(self.cr.postorder())
+        self.tape = [p[i].valueof() for i in range(total_length)]
 
     def evaluate_tape(self):
         pass
+
+    def align_starts(self):
+        postorder = self.cr.postorder()
+        i = 0
+        for cr in postorder:
+            if isinstance(cr, CRnum):
+                continue
+            cr.start = i
+            i += len(cr)
+        return i
     
     # todo:
     # move these
@@ -71,9 +81,6 @@ def cse(table, cr: CR):
     operands = [cse(table, operand) for operand in cr]
     copy = type(cr)(operands, cr.order)
     return intern(table, copy)
-
-
-
 
 def intern(table, cr: CR):
     if isinstance(cr, CRnum):
