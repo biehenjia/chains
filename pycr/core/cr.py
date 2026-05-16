@@ -4,6 +4,9 @@ from operator import add, mul, pow
 CRalgebra = Algebra()
 
 class CR:
+    
+    operands: list["CR"]
+    
     def __init__(self, operands, order): 
         self.operands = operands
         self.order = order
@@ -214,7 +217,12 @@ class CRcot(CRtrig):
     def valueof(self): return  self.operands[len(self)//2].valueof()/ self.operands[0].valueof()
 
 class CRE(CR):
-    def realize(self): return [operand.valueof() for operand in self]
+    def __init__(self, operands, order):
+        super().__init__(operands, order)
+        self.min_order = min(operands,key= lambda x: x.order)
+
+    def realize(self): 
+        return [operand.valueof() for operand in self]
 
 
 # necessary?? already in position to use ops table + lambda/f lookup
@@ -245,14 +253,17 @@ class CREcot(CRE):
 # shouldn't even have a source. It will be a child node of a CRobject
 class CREconnector(CRE):
     
-    def __init__(self, source, index = 0):
+    def __init__(self, source, index = -1):
         self.operands = [source]
         self.index = index
         self.order = source.order
         self.f_valueof = None
 
     def valueof(self):
-        return self.operands[0][self.index].valueof()
+        if self.index == -1:
+            return self.operands[0].valueof()
+        else:
+            return self.operands[0][self.index].valueof()
     
     def crhash(self):
         if not hasattr(self.operands[0], "suffix_hashes"):
@@ -292,3 +303,5 @@ def log(arg, base = None):
         if base is None:
             base = CRnum(sympy.E)
         return arg.log(base) 
+
+
