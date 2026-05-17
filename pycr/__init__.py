@@ -11,13 +11,16 @@ def chainify(expr_string):
     return cr, symbol_table
 
 def vchainify(expr_string, vector_symbol, lane_width=4):
-    expr_symbolic, symbol_table = parse_string(expr_string)
+    expr_symbolic, symbol_table = parse_string(expr_string, vectorized=True)
+    cr = crmake(expr_symbolic, symbol_table)
 
 def compile_ast(cr_ast):
     namespace = {"numpy":numpy, "numba":numba}
     code = compile(cr_ast, filename="<ast>", mode="exec")
     exec(code,namespace)
     return namespace["generated"]
+
+
 
 # of the form variable, start, step
 

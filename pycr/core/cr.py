@@ -29,11 +29,9 @@ class CR:
     # returns a copy of the cr but elements are replaced with realized values
     def seeded(self, symbol_table):
         return type(self)([self[i].seeded(symbol_table) for i in range(len(self))], self.order)            
-
             
     
     def __add__(self,target):
-
         if self.order > target.order:
             key = (type(self), CRnum)
         elif self.order < target.order:
@@ -117,8 +115,6 @@ class CRnum(CR):
     def seeded(self, table):
         return CRnum(self.value.subs(table))
 
-
-
     def postorder(self): yield self
     def valueof(self): return self.value
     def simplify(self): return self
@@ -127,8 +123,6 @@ class CRnum(CR):
     def is_zero(self): return self.valueof().is_zero
     def is_one(self): return (self.valueof() -1).is_zero
     def isnumber(self): return True
-
-
     
     def walk_str(self, prefix="", terminal=True):
         return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
@@ -141,6 +135,7 @@ class CRnum(CR):
         h.update(b"CRnum")
         h.update(sympy.srepr(self.value).encode())
         return [h.digest()]
+    
 
 class CRsum(CR):
     def simplify(self):
@@ -151,8 +146,8 @@ class CRsum(CR):
             return CRnum(0)
         new_operands = [self[i].copy() for i in range(j)]
         return CRsum(new_operands, self.order)
-    
-    
+
+
 
 class CRprod(CR):
     def simplify(self):
@@ -271,37 +266,27 @@ class CREconnector(CRE):
         return self.operands[0].suffix_hashes[self.index] 
 
 def sin(arg):
-    if isinstance(arg, sympy.Expr):
-        return sympy.sin(arg)
-    elif isinstance(arg, CR):
-        return arg.sin()
+    if isinstance(arg, sympy.Expr): return sympy.sin(arg)
+    elif isinstance(arg, CR): return arg.sin()
 
 def cos(arg):
-    if isinstance(arg, sympy.Expr):
-        return sympy.cos(arg)
-    elif isinstance(arg, CR):
-        return arg.cos()
+    if isinstance(arg, sympy.Expr): return sympy.cos(arg)
+    elif isinstance(arg, CR): return arg.cos()
     
 def tan(arg):
-    if isinstance(arg, sympy.Expr):
-        return sympy.tan(arg)
-    elif isinstance(arg, CR):
-        return arg.tan()
+    if isinstance(arg, sympy.Expr): return sympy.tan(arg)
+    elif isinstance(arg, CR): return arg.tan()
 
 def cot(arg):
-    if isinstance(arg, sympy.Expr):
-        return 1/sympy.tan(arg)
-    elif isinstance(arg, CR):
-        return arg.cot()
+    if isinstance(arg, sympy.Expr): return 1/sympy.tan(arg)
+    elif isinstance(arg, CR): return arg.cot()
 
 def log(arg, base = None):
     if isinstance(arg, sympy.Expr):
-        if base is None:
-            base = sympy.E
+        if base is None: base = sympy.E
         return sympy.log(arg, base)
     elif isinstance(arg, CR):
-        if base is None:
-            base = CRnum(sympy.E)
+        if base is None: base = CRnum(sympy.E)
         return arg.log(base) 
 
 
