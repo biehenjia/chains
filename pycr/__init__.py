@@ -1,5 +1,7 @@
 from .codegen import *
+import llvmlite 
 from .core import *
+from .crterm import *
 import sympy
 import numpy, numba
 from collections import namedtuple
@@ -7,11 +9,21 @@ from collections import namedtuple
 
 
 
-def cr_compile(expression, initial_value):
+def cr_compile(expression, environment):
     expr = sympy.parsing.sympy_parser.parse_expr(expression)
-    cr =         
-    
-    
+    cr = crmake(expr, sympy.Symbol('y'), 2)
+    term = CRterm(cr)
+    term.prepare(environment, True,2)
+    return compile_cr_vec(term,llvmlite.ir.FloatType(), 2)
+
+def cr_scalarcompile(expression, environment):
+    expr = sympy.parsing.sympy_parser.parse_expr(expression)
+    cr = crmake(expr)
+    print(cr)
+    term = CRterm(cr)
+    term.prepare(environment, True)
+    # return compile_cr(term, llvmlite.ir.FloatType())
+
 
 
 
@@ -57,58 +69,66 @@ def parse_string(s,symbol_table = None, vectorized = False):
 #     exec(code,namespace)
 #     return namespace["generated"]
 
-def crmake(ASTnode ):
+def crmake(ASTnode, outermost=sympy.Symbol(''), width=0):
     if isinstance(ASTnode, sympy.Number): return CRnum(ASTnode)
 
     elif isinstance(ASTnode, sympy.Symbol):
-        operands = [CRnum(start), CRnum(step)]
-        result = CRsum(operands, order)
-        return result
+        name = ASTnode.name
+
+        if ASTnode == outermost and width > 0:
+            operands = [CRnum(f"{name}_0")+CRnum("t"), CRnum(width)*CRnum(f"{name}_h")]
+            res = CRsum(operands, ASTnode)
+            return res
+        else:
+            
+            operands = [CRnum(f"{name}_0"), CRnum(f"{name}_h")]
+            res = CRsum(operands, ASTnode)
+            return res
     
     elif isinstance(ASTnode, sympy.Add):
         arglist = ASTnode.args
-        result  = crmake(arglist[0])
+        result  = crmake(arglist[0], outermost, width)
         for i in range(1,len(arglist)):
-            result += crmake(arglist[i],)
+            result += crmake(arglist[i], outermost, width)
         return result
     
     elif isinstance(ASTnode, sympy.Mul):
         arglist = ASTnode.args
-        result = crmake(arglist[0])
+        result = crmake(arglist[0], outermost, width)
         for i in range(1,len(arglist)):
-            result *= crmake(arglist[i])
+            result *= crmake(arglist[i], outermost, width)
         return result
     
     elif isinstance(ASTnode, sympy.Pow):
-        base = crmake(ASTnode.args[0])
-        exponent = crmake(ASTnode.args[1])
+        base = crmake(ASTnode.args[0], outermost, width)
+        exponent = crmake(ASTnode.args[1], outermost, width )
         return base ** exponent
     
     elif isinstance(ASTnode, sympy.exp):
-        arg = crmake(ASTnode.args[0])
+        arg = crmake(ASTnode.args[0], outermost, width)
         return CRnum(sympy.E)**arg
     
     elif isinstance(ASTnode,sympy.functions.elementary.trigonometric.TrigonometricFunction):
         if isinstance(ASTnode, sympy.sin):
-            arg = crmake(ASTnode.args[0])
+            arg = crmake(ASTnode.args[0], outermost, width)
             return sin(arg)
         elif isinstance(ASTnode, sympy.cos):
-            arg = crmake(ASTnode.args[0])
+            arg = crmake(ASTnode.args[0], outermost, width)
             return cos(arg)
         elif isinstance(ASTnode, sympy.tan):
-            arg = crmake(ASTnode.args[0])
+            arg = crmake(ASTnode.args[0], outermost, width)
             return tan(arg)
         elif isinstance(ASTnode, sympy.cot):
-            arg = crmake(ASTnode.args[0])
+            arg = crmake(ASTnode.args[0], outermost, width)
             return cot(arg)
     
     elif isinstance(ASTnode, sympy.log):
         if len(ASTnode.args) == 1:
-            arg = crmake(ASTnode.args[0])
+            arg = crmake(ASTnode.args[0], outermost, width)
             return log(arg)
         elif len(ASTnode.args) == 2:
-            arg = crmake(ASTnode.args[0])
-            base = crmake(ASTnode.args[1])
+            arg = crmake(ASTnode.args[0], outermost, width)
+            base = crmake(ASTnode.args[1], outermost, width)
             return log(arg, base)
         
 

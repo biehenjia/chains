@@ -13,6 +13,9 @@ def addCRsumCRnum(l: CRsum, r: CRnum):
 
 @CRalgebra.defineBinary(ADD, CRsum, CRsum, commutative=True)
 def addCRsumCRsum(l: CRsum, r: CRsum):
+    print('here!')
+    print(l)
+    print(r)
     if len(r) > len(l):
         l, r = r, l
     new_operands = [l[i] + r[i] if i < len(r) else l[i] for i in range(len(l))]
@@ -20,7 +23,8 @@ def addCRsumCRsum(l: CRsum, r: CRsum):
 
 @CRalgebra.defineDefault(ADD)
 def defaultAdd(l, r):
-    return CREadd([l.copy(), r.copy()], max(l.variable,r.variable))
+    variable = l.variable if l.variable.name > r.variable.name else r.variable
+    return CREadd([l.copy(), r.copy()], variable)
 
 
 

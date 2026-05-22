@@ -114,14 +114,14 @@ def emit_shift_vec(builder, node, work, scalar_type, W):
  
     elif isinstance(node, CRE):
         for i in range(len(node)):
-            if node[i].order == node.order:
+            if node[i].variable == node.variable:
                 st(emit_access_vec(builder, node[i], work, scalar_type, W), slc[i])
 
 
 def emit_fetch_vec(builder, node, work, scalar_type, W):
     if isinstance(node, CRE):
         for i, child in enumerate(node):
-            if not isinstance(child, CRnum) and child.min_order < node.order:
+            if isinstance(child, CRE) and child.least_variable != node.variabe:
                 builder.store(
                     emit_access_vec(builder, child, work, scalar_type, W),
                     work[node.start + i]
@@ -130,7 +130,7 @@ def emit_fetch_vec(builder, node, work, scalar_type, W):
         for i, child in enumerate(node):
             if isinstance(child, CRnum):
                 continue
-            if child.order != node.order:
+            if child.variable != node.variable:
                 builder.store(
                     emit_access_vec(builder, child, work, scalar_type, W),
                     work[node.start + i]
@@ -228,8 +228,8 @@ def emit_function_vec(module, name, term, scalar_type, W):
 def compile_cr_vec(term, scalar_type, W, name="generated_vec", opt=3):
     import ctypes, numpy as np
  
-    if hasattr(term, "prepare"):
-        term.prepare(vectorized=True)
+    # if hasattr(term, "prepare"):
+    #     term.prepare()
     
     module = ir.Module(name="crmod_vec")
     module.triple = binding.get_default_triple()

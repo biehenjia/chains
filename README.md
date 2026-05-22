@@ -1,3 +1,7 @@
+# TODO:
+- fix case for scalar evaluation 
+- fix incorrect CREconnector pulling sin and cos types together
+
 # chains
 chains of recurrences engine in python
 

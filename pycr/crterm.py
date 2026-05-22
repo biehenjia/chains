@@ -1,4 +1,4 @@
-from ..core import *
+from .core import *
 import sympy
 # purpose
 '''
@@ -24,39 +24,60 @@ class CRterm:
 
     def __init__(self,cr):
         self.cr = cr
-        self.cse_cr = cr
+        self.varmap = None
         self.orders = []
         self.tape = []
 
-    def prepare(self, vectorized = False):
-        """
-        prepares the CRterm for vectorization. 
+    def prepare(self, environment, eliminate=False, vectorization = 1):
+        if eliminate:
+            self.cr = cse({}, self.cr)
         
-        :param self: Description
-        :param vectorized: Description
-        """
         total_length = self.align_starts()
         self.construct_tape(total_length)
+        self.sort_variables() 
         self.partition_orders()
-        if vectorized:
-            self.vectorize_tape()
+        if vectorization> 1 :
+            self.vectorize_tape(vectorization)
+            
+        
+        self.evaluate_tape(environment, vectorization > 1)
+        # for col in self.tape:
+        #     if vectorization > 1:
+        #         print(" ".join(list(map(str,col))))
+        #     else:
+        #         print(col)
 
+    def sort_variables(self):
+        variables = set()
+        for node in self.cr.postorder():
+            if isinstance(node, CRnum): continue
+            variables.add(node.variable)
+        orders = sorted(variables, key = lambda x: x.name)
+        self.varmap = {orders[i]:i for i in range(len(orders))}
+        
     def partition_orders(self):
         # root will have highest order
-        n_orders = self.cr.order
-        self.orders = [[] for i in range(n_orders+1)]
+        n_orders = len(self.varmap)
+        self.orders = [[] for i in range(n_orders)]
         for member in self.cr.postorder():
             if isinstance(member, CRnum):
                 continue
-            member_order = member.order
-            self.orders[member_order].append(member)
+            self.orders[self.varmap[member.variable]].append(member)
 
     def construct_tape(self, total_length):
         p = list(self.cr.postorder())
         self.tape = [p[i].valueof() for i in range(total_length)]
-
-    def evaluate_tape(self):
-        pass
+    
+    def evaluate_tape(self, environment, vectorized = False):
+        if vectorized:
+            for i in range(len(self.tape)):
+                for j in range(len(self.tape[i])):
+                    self.tape[i][j] = self.tape[i][j].subs(environment)
+        else:
+            for i in range(len(self.tape)):
+                self.tape[i] = self.tape[i].subs(environment)
+        
+        
 
     def align_starts(self):
         postorder = self.cr.postorder()
@@ -68,20 +89,14 @@ class CRterm:
             i += len(cr)
         return i
     
-    def vectorize_tape(self):
+    def vectorize_tape(self, vectorization):
         newtape = [None for i in range(len(self.tape))]
-
         for i in range(len(self.tape)):
-            piece = [None for i in range(4)]
-            for j in range(4):
+            piece = [None for i in range(vectorization)]
+            for j in range(vectorization):
                 piece[j] = self.tape[i].subs('t',j)
             newtape[i] = piece
-        
         self.tape = newtape
-
-                
-    # todo:
-    # move these
 
 
 def cse(table, cr: CR):

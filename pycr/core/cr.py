@@ -1,5 +1,6 @@
-import sympy, hashlib, struct
 from __future__ import annotations
+
+import sympy, hashlib, struct
 from .algebra import *
 from operator import add, mul, pow
 CRalgebra = Algebra()
@@ -35,9 +36,10 @@ class CR:
             
     
     def __add__(self,target: CR) -> CR:
+         
         if self.variable.name > target.variable.name:
             key = (type(self), CRnum)
-        elif target.variable.name < target.variable.name:
+        elif self.variable.name < target.variable.name:
             key = (CRnum, type(target))
         else:
             key = (type(self), type(target))
@@ -49,6 +51,7 @@ class CR:
         elif self.variable.name < target.variable.name:
             key = (CRnum, type(target))
         else:
+
             key = (type(self), type(target))
         return CRalgebra.apply(MUL, self, target, key=key)
 

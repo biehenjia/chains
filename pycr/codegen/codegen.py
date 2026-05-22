@@ -108,7 +108,8 @@ def emit_fetch(builder, node, tape):
     if isinstance(node, CRE):
         for i, child in enumerate(node):
             # if the child is not a CRnum and has a lesser ordered dependency, then we must propogate
-            if not isinstance(child, CRnum) and child.min_order < node.variable :
+            # 
+            if isinstance(child, CRE) and child.least_variable != node.variable :
                 # fetch the child by its access pattern into
                 builder.store(emit_access(builder, child, tape), tape[node.start+i])
     else:
@@ -194,8 +195,7 @@ def emit_function(module, name, term):
 
 def compile_cr(term, name="generated", opt=3):
     import ctypes
-    if hasattr(term, "prepare"):
-        term.prepare()
+
 
     module = ir.Module(name="crmod")
     module.triple = binding.get_default_triple()
