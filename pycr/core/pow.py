@@ -46,12 +46,12 @@ def powCRsumCRnum(l: CRsum, r: CRnum):
 @CRalgebra.defineBinary(POW, CRnum, CRsum)
 def powCRnumCRsum(l: CRnum, r: CRsum):
     new_operands = [l ** r[i] for i in range(len(r))]
-    return CRprod(new_operands, r.order)
+    return CRprod(new_operands, r.variable)
 
 @CRalgebra.defineBinary(POW, CRprod, CRnum)
 def powCRprodCRnum(l: CRprod, r: CRnum):
     new_operands = [l[i]** r for i in range(len(l))]
-    return CRprod(new_operands, l.order)
+    return CRprod(new_operands, l.variable)
 
 @CRalgebra.defineBinary(POW, CRprod,CRsum)
 def powCRprodCRsum(l: CRprod, r: CRsum):
@@ -66,10 +66,11 @@ def powCRprodCRsum(l: CRprod, r: CRsum):
                 r2 *= l[j] ** r[k] * CRnum(sympy.binomial(j,i-k)*sympy.binomial(i,j))
             r1 *= r2
         new_operands[i] = r1
-    return CRprod(new_operands, l.order)
+    return CRprod(new_operands, l.variable)
 
 
 # --- DEFAULTS ---
 @CRalgebra.defineDefault(POW)
 def defaultPow(l, r):
-    return CREpow([l.copy(), r.copy()], max(l.order,r.order))
+    variable = l.variable if l.variable.name > r.variable.name else r.variable.name
+    return CREpow([l.copy(), r.copy()], variable)

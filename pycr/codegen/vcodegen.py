@@ -1,19 +1,30 @@
 from llvmlite import ir, binding
 from ..core import *
-
+import numpy
 
 i64 = ir.IntType(64)
 i32 = ir.IntType(32)
 
-def _intr(mod, name, scalar_type, W, n_args = 1):
+def _vsuffix(scalar_type, W):
+    if isinstance(scalar_type, ir.FloatType):  bits = 32; tag = "f"
+    elif isinstance(scalar_type, ir.DoubleType): bits = 64; tag = "f"
+    else: raise TypeError(scalar_type)
+    return f"v{W}{tag}{bits}"
+
+def _declare(mod, name, fnty):  
+    if name in mod.globals:
+        return mod.globals[name]
+    return ir.Function(mod, fnty, name=name)
+
+def _intr(mod, name, scalar_type, W, n_args=1):
     vt = ir.VectorType(scalar_type, W)
     fnty = ir.FunctionType(vt, [vt]*n_args)
-    return mod.declare_intrinsic(f"llvm.{name}", tys =[vt], fnty = fnty)
+    return _declare(mod, f"llvm.{name}.{_vsuffix(scalar_type, W)}", fnty)
 
 def _intr_fma(mod, scalar_type, W):
     vt = ir.VectorType(scalar_type, W)
-    fnty = ir.FunctionType(vt, [vt,vt,vt])
-    return mod.declare_intrinsic("llvm.fma", tys = [vt], fnty=fnty)
+    fnty = ir.FunctionType(vt, [vt, vt, vt])
+    return _declare(mod, f"llvm.fma.{_vsuffix(scalar_type, W)}", fnty)
 
 def _splat(builder, scalar_val, scalar_type, W):
     vt = ir.VectorType(scalar_type,W )
@@ -30,7 +41,7 @@ def emit_prologue_vec(builder, tape, scalar_type, W):
     consts = []
     work = []
     for v in tape:
-        c = _splat_const(builder, float(v), scalar_type, W)
+        c = ir.Constant(vt, [ir.Constant(scalar_type, float(x)) for x in v])
         a = builder.alloca(vt)
         builder.store(c, a)
         consts.append(c)
@@ -58,9 +69,9 @@ def emit_access_vec(builder, node, work ,scalar_type, W):
     elif isinstance(node, CREadd): return builder.fadd(first, second)
     elif isinstance(node, CREmul): return builder.fmul(first, second)
     elif isinstance(node, CREpow): return builder.call(_intr(mod, "pow", scalar_type, W, 2), [first, second])
-    elif isinstance(node, CRElog): return builder.call(_intr(mod, "log",  scalar_type, W),    [first])
-    elif isinstance(node, CREsin): return builder.call(_intr(mod, "sin",  scalar_type, W),    [first])
-    elif isinstance(node, CREcos): return builder.call(_intr(mod, "cos",  scalar_type, W),    [first])
+    elif isinstance(node, CRElog): return builder.call(_intr(mod, "log",  scalar_type, W), [first])
+    elif isinstance(node, CREsin): return builder.call(_intr(mod, "sin",  scalar_type, W), [first])
+    elif isinstance(node, CREcos): return builder.call(_intr(mod, "cos",  scalar_type, W), [first])
     elif isinstance(node, CREtan):
         s = builder.call(_intr(mod, "sin", scalar_type, W), [first])
         c = builder.call(_intr(mod, "cos", scalar_type, W), [first])
@@ -198,29 +209,29 @@ def emit_function_vec(module, name, term, scalar_type, W):
             builder.ret_void()
     
 
+    adj = list(bounds[:-1]) + [builder.sdiv(bounds[-1], ir.Constant(i64, W))]
+
     strides = [None] * n
-    strides[-1] = ir.Constant(i64, W)   # innermost stride is W, not 1
+    strides[-1] = ir.Constant(i64, W)
     for i in range(n - 2, -1, -1):
-        strides[i] = builder.mul(strides[i + 1], bounds[i + 1])
+        strides[i] = builder.mul(strides[i + 1], adj[i + 1])
  
     work, consts = emit_prologue_vec(builder, term.tape, scalar_type, W)
     root = term.orders[-1][-1]
-    emit_nested_vec(builder, term.orders, bounds, work, consts, out_ptr, strides, root, scalar_type, W)
+    inner = builder.sdiv(bounds[-1], ir.Constant(i64, W))
+    adjusted_bounds = list(bounds[:-1]) + [inner]
+    emit_nested_vec(builder, term.orders, adjusted_bounds, work, consts, out_ptr, strides, root, scalar_type, W)
     builder.ret_void()
     return fn
 
 
 def compile_cr_vec(term, scalar_type, W, name="generated_vec", opt=3):
-    """
-    scalar_type: an llvmlite IR type, e.g. ir.FloatType() or ir.DoubleType()
-    W:           vector width (caller's choice, must match register width)
-    """
     import ctypes, numpy as np
  
     if hasattr(term, "prepare"):
-        term.prepare()
- 
-    module        = ir.Module(name="crmod_vec")
+        term.prepare(vectorized=True)
+    
+    module = ir.Module(name="crmod_vec")
     module.triple = binding.get_default_triple()
     emit_function_vec(module, name, term, scalar_type, W)
  
@@ -243,9 +254,16 @@ def compile_cr_vec(term, scalar_type, W, name="generated_vec", opt=3):
     
     n  = len(term.orders)
     cfntype = ctypes.CFUNCTYPE(None, ctypes.POINTER(csc), *([ctypes.c_int64] * n))
-    cfn = cfntype(engine.get_function_address(name))
-    cfn._engine  = engine
-    cfn._module  = llmod
+    raw = cfntype(engine.get_function_address(name))
+
+    np_dtype = np.float32 if isinstance(scalar_type, ir.FloatType) else np.float64
+
+    def cfn(arr, *bounds):
+        assert arr.dtype == np_dtype and arr.flags["C_CONTIGUOUS"]
+        raw(arr.ctypes.data_as(ctypes.POINTER(csc)), *bounds)
+
+    cfn._engine = engine
+    cfn._module = llmod
     cfn.ir_unopt = str(module)
     cfn.ir_opt = str(llmod)
     cfn.asm = tm.emit_assembly(llmod)

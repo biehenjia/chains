@@ -9,12 +9,12 @@ def sinCRnum(u):
 def sinCRsum(u):
 
     new_operands = [sin(u[i]) if i < len(u) else cos(u[i-len(u)]) for i in range(len(u)*2)]
-    return CRsin(new_operands,u.order)
+    return CRsin(new_operands,u.variable)
 
 @CRalgebra.defineDefault(SIN)
 def defaultSin(u):
     # fallback 
-    return CREsin([u.copy()],u.order)
+    return CREsin([u.copy()],u.variable)
 
 
 

@@ -1,5 +1,5 @@
 from ..core import *
-
+import sympy
 # purpose
 '''
 After constructing the CR tree, they each have CRterm wrappers that hold 
@@ -20,28 +20,26 @@ RESPONSABILITIES:
 
 class CRterm:
     cr: CR
+    tape: list[sympy.Expr]
 
     def __init__(self,cr):
         self.cr = cr
-
-        # hold original cr, but we can perform CSE or transformations on a temporary copy
         self.cse_cr = cr
-        # no need for truncation
-        # purpose of symbol table here is to seed the CR when we need it.
-        # we construct a temporary CR and seed it with values
-
-        # after seeding, we hold the partitions of the CR.
-        # we separate the entire tree into different CRs where each CR
-        # pertains to a different order. 
         self.orders = []
-        # the register tape of each of the leaf nodes in the CR tree.
         self.tape = []
 
-    def prepare(self):
+    def prepare(self, vectorized = False):
+        """
+        prepares the CRterm for vectorization. 
+        
+        :param self: Description
+        :param vectorized: Description
+        """
         total_length = self.align_starts()
         self.construct_tape(total_length)
         self.partition_orders()
-        pass
+        if vectorized:
+            self.vectorize_tape()
 
     def partition_orders(self):
         # root will have highest order
@@ -54,7 +52,6 @@ class CRterm:
             self.orders[member_order].append(member)
 
     def construct_tape(self, total_length):
-        
         p = list(self.cr.postorder())
         self.tape = [p[i].valueof() for i in range(total_length)]
 
@@ -71,6 +68,18 @@ class CRterm:
             i += len(cr)
         return i
     
+    def vectorize_tape(self):
+        newtape = [None for i in range(len(self.tape))]
+
+        for i in range(len(self.tape)):
+            piece = [None for i in range(4)]
+            for j in range(4):
+                piece[j] = self.tape[i].subs('t',j)
+            newtape[i] = piece
+        
+        self.tape = newtape
+
+                
     # todo:
     # move these
 
@@ -79,7 +88,7 @@ def cse(table, cr: CR):
     if isinstance(cr, CRnum):
         return cr
     operands = [cse(table, operand) for operand in cr]
-    copy = type(cr)(operands, cr.order)
+    copy = type(cr)(operands, cr.variable)
     return intern(table, copy)
 
 def intern(table, cr: CR):
@@ -89,12 +98,6 @@ def intern(table, cr: CR):
     suffixes = cr._suffixhash()
     if crhash in table:
         original_cr = table[crhash]
-        # if type mismatch in the trig case then we can still connect
-        # construct new CR in the place of it with proper values 
-        
-        
-        # current issue: CRE connector will match all trig types
-        # work is reused, but we want to maintain the grab index
         return CREconnector(original_cr)
     else:
         table[crhash] = cr
@@ -107,18 +110,17 @@ def intern(table, cr: CR):
                 operands += [CREconnector(original_cr,i )]
                 operands +=[cr[j+hl] for j in range(i)]
                 operands += [CREconnector(original_cr,i+hl)]
-                return CRtrig(operands, cr.order)
+                return CRtrig(operands, cr.variable)
             else:
                 table[suffixes[i]] = cr
                 pass
         return cr 
-    # CRsum, CRprod case
     else:
         for i in range(1, len(cr)-1):
             if suffixes[i] in table:
                 operands = [cr[j].copy() for j in range(i)]
                 operands.append(CREconnector(original_cr, i))
-                return type(cr)(operands, cr.order)
+                return type(cr)(operands, cr.variable)
             else:
                 table[suffixes[i]] = cr
     

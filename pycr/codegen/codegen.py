@@ -1,3 +1,9 @@
+'''
+LOTS OF LOGIC TO FIX REGARDING ORDERS!!! 
+
+'''
+
+
 from llvmlite import ir, binding
 from ..core import *
 
@@ -72,7 +78,7 @@ def emit_shift(builder: ir.IRBuilder, node: CR, tape):
     
     elif isinstance(node, CRE):
         for i in range(len(node)):
-            if node[i].order == node.order:
+            if node[i].variable == node.variable:
                 builder.store(emit_access(builder, node[i], tape), slc[i])
 
 def linear_idx(builder, idxs, strides):
@@ -102,14 +108,14 @@ def emit_fetch(builder, node, tape):
     if isinstance(node, CRE):
         for i, child in enumerate(node):
             # if the child is not a CRnum and has a lesser ordered dependency, then we must propogate
-            if not isinstance(child, CRnum) and child.min_order < node.order:
+            if not isinstance(child, CRnum) and child.min_order < node.variable :
                 # fetch the child by its access pattern into
                 builder.store(emit_access(builder, child, tape), tape[node.start+i])
     else:
         for i,child in enumerate(node):
             if isinstance(child, CRnum):
                 continue
-            if child.order != node.order:
+            if child.variable != node.variable:
                 builder.store(emit_access(builder, child, tape), tape [node.start+i])
     
     

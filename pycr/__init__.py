@@ -1,12 +1,29 @@
-from .input import *
 from .codegen import *
 from .core import *
-from .engine import * 
 import sympy
 import numpy, numba
+from collections import namedtuple
 
-def chainify(expr_string):
-    expr_symbolic, symbol_table = parse_string(expr_string)
+
+
+
+def cr_compile(expression, initial_value):
+    expr = sympy.parsing.sympy_parser.parse_expr(expression)
+    cr =         
+    
+    
+
+
+
+
+# we should make a handler class for the CR that has all the symbols that we care about in it. We can reorder the class and stuff as we so choose.
+# it will also be where the CRterm and CSE things reside as well.
+
+# TWO MAIN WAYS FOR NOW:
+# 1. directly compile to a function end to end. 
+
+def chainify(expr_string, vectorized = False):
+    expr_symbolic, symbol_table = parse_string(expr_string, None, vectorized)
     cr = crmake(expr_symbolic,symbol_table)
     return cr, symbol_table
 
@@ -14,12 +31,86 @@ def vchainify(expr_string, vector_symbol, lane_width=4):
     expr_symbolic, symbol_table = parse_string(expr_string, vectorized=True)
     cr = crmake(expr_symbolic, symbol_table)
 
-def compile_ast(cr_ast):
-    namespace = {"numpy":numpy, "numba":numba}
-    code = compile(cr_ast, filename="<ast>", mode="exec")
-    exec(code,namespace)
-    return namespace["generated"]
+# dont give a symbol table
+def parse_string(s,symbol_table = None, vectorized = False):
+    expr = sympy.parsing.sympy_parser.parse_expr(s)
+    
+    symbols = sympy.ordered(expr.free_symbols)
+    # create auxiliary symbols representing start step
+    symbol_table = {} if symbol_table is None else symbol_table
+    for symbol in symbols:
+        if not symbol in symbol_table:
+            # symbol_table[symbol] = {'order': len(symbol_table), 'params': (0, 1)}   
+            step = sympy.Symbol(f'{symbol}_h') if not vectorized else 4*sympy.Symbol(f"{symbol}_h")
+            start = sympy.Symbol(f'{symbol}_0') if not vectorized else sympy.Symbol(f"{symbol}_0") + sympy.Symbol("t")
+            symbol_table[symbol] = {'order': len(symbol_table), 'params': (start,step )}    
+    return expr,symbol_table
 
+
+    
+
+
+# not needed since we don't use numba anymore
+# def compile_ast(cr_ast):
+#     namespace = {"numpy":numpy, "numba":numba}
+#     code = compile(cr_ast, filename="<ast>", mode="exec")
+#     exec(code,namespace)
+#     return namespace["generated"]
+
+def crmake(ASTnode ):
+    if isinstance(ASTnode, sympy.Number): return CRnum(ASTnode)
+
+    elif isinstance(ASTnode, sympy.Symbol):
+        operands = [CRnum(start), CRnum(step)]
+        result = CRsum(operands, order)
+        return result
+    
+    elif isinstance(ASTnode, sympy.Add):
+        arglist = ASTnode.args
+        result  = crmake(arglist[0])
+        for i in range(1,len(arglist)):
+            result += crmake(arglist[i],)
+        return result
+    
+    elif isinstance(ASTnode, sympy.Mul):
+        arglist = ASTnode.args
+        result = crmake(arglist[0])
+        for i in range(1,len(arglist)):
+            result *= crmake(arglist[i])
+        return result
+    
+    elif isinstance(ASTnode, sympy.Pow):
+        base = crmake(ASTnode.args[0])
+        exponent = crmake(ASTnode.args[1])
+        return base ** exponent
+    
+    elif isinstance(ASTnode, sympy.exp):
+        arg = crmake(ASTnode.args[0])
+        return CRnum(sympy.E)**arg
+    
+    elif isinstance(ASTnode,sympy.functions.elementary.trigonometric.TrigonometricFunction):
+        if isinstance(ASTnode, sympy.sin):
+            arg = crmake(ASTnode.args[0])
+            return sin(arg)
+        elif isinstance(ASTnode, sympy.cos):
+            arg = crmake(ASTnode.args[0])
+            return cos(arg)
+        elif isinstance(ASTnode, sympy.tan):
+            arg = crmake(ASTnode.args[0])
+            return tan(arg)
+        elif isinstance(ASTnode, sympy.cot):
+            arg = crmake(ASTnode.args[0])
+            return cot(arg)
+    
+    elif isinstance(ASTnode, sympy.log):
+        if len(ASTnode.args) == 1:
+            arg = crmake(ASTnode.args[0])
+            return log(arg)
+        elif len(ASTnode.args) == 2:
+            arg = crmake(ASTnode.args[0])
+            base = crmake(ASTnode.args[1])
+            return log(arg, base)
+        
 
 
 # of the form variable, start, step

@@ -1,4 +1,5 @@
 import sympy, hashlib, struct
+from __future__ import annotations
 from .algebra import *
 from operator import add, mul, pow
 CRalgebra = Algebra()
@@ -6,13 +7,15 @@ CRalgebra = Algebra()
 class CR:
     
     operands: list["CR"]
-    
-    def __init__(self, operands, order): 
+    variable: sympy.Symbol 
+
+    def __init__(self, operands, variable): 
         self.operands = operands
-        self.order = order
+        self.variable = variable
 
     def __len__(self): return len(self.operands) 
     def __getitem__(self, key): return self.operands[key]
+
     
     def postorder(self):
         for operand in self.operands:
@@ -21,29 +24,29 @@ class CR:
 
     def copy(self):
         new_operands = [self[i].copy() for i in range(len(self))]
-        return type(self)(new_operands, self.order)
+        return type(self)(new_operands, self.variable)
     
     def isnumber(self):
         return False
 
     # returns a copy of the cr but elements are replaced with realized values
     def seeded(self, symbol_table):
-        return type(self)([self[i].seeded(symbol_table) for i in range(len(self))], self.order)            
+        return type(self)([self[i].seeded(symbol_table) for i in range(len(self))], self.variable)                    
             
     
-    def __add__(self,target):
-        if self.order > target.order:
+    def __add__(self,target: CR) -> CR:
+        if self.variable.name > target.variable.name:
             key = (type(self), CRnum)
-        elif self.order < target.order:
+        elif target.variable.name < target.variable.name:
             key = (CRnum, type(target))
         else:
             key = (type(self), type(target))
         return CRalgebra.apply(ADD, self, target , key=key)
     
-    def __mul__(self, target):
-        if self.order > target.order:
+    def __mul__(self, target: CR) -> CR:
+        if self.variable.name > target.variable.name:
             key = (type(self), CRnum)
-        elif self.order < target.order:
+        elif self.variable.name < target.variable.name:
             key = (CRnum, type(target))
         else:
             key = (type(self), type(target))
@@ -65,14 +68,14 @@ class CR:
         return CRalgebra.apply(LOG, self, target, key=key)
     
     def __str__(self):
-        layers = [f"{self.__class__.__name__}({self.order})"]
+        layers = [f"{self.__class__.__name__}({self.variable})"]
         for i,node in enumerate(self):
             layers.extend(node.walk_str("",i== len(self)-1))
         return "\n".join(layers)
     
     def walk_str(self,prefix="", terminal=True):
         pipe = "└─ " if terminal else "├─ "
-        layer = f"{prefix}{pipe}{self.__class__.__name__}({self.valueof(),self.order})"
+        layer = f"{prefix}{pipe}{self.__class__.__name__}({self.valueof(),self.variable})"
         layers = [layer]
         prefix_c = f"{prefix}{'   ' if terminal else '|  '} "
         for i,node in enumerate(self):
@@ -86,7 +89,7 @@ class CR:
         # works for both CRsum and CRprod types
         # need to account for the same order
         # should also just work with the CRE types
-        prev = f"{type(self)}({self.order})".encode()
+        prev = f"{type(self)}({self.variable})".encode()
         suffix_hashes = [None for i in range(len(self))]
         for i in range(len(self)):
             h = hashlib.blake2b()
@@ -110,7 +113,7 @@ class CRnum(CR):
             self.value = sympy.S(str(value), rational=True)
         else:
             self.value = value
-        self.order = -1
+        self.variable = sympy.Symbol('')
     
     def seeded(self, table):
         return CRnum(self.value.subs(table))
@@ -145,7 +148,7 @@ class CRsum(CR):
         if j == 0:
             return CRnum(0)
         new_operands = [self[i].copy() for i in range(j)]
-        return CRsum(new_operands, self.order)
+        return CRsum(new_operands, self.variable)
 
 
 
@@ -160,11 +163,11 @@ class CRprod(CR):
         if i == 0:
             return CRnum(1)
         new_operands = [self[j].copy() for j in range(i)]
-        return CRprod(new_operands, self.order)
+        return CRprod(new_operands, self.variable)
     
     def correctP(self, newlength):
         new_operands = [self[i].copy() if i < len(self) else CRnum(1) for i in range(newlength)]
-        return CRprod(new_operands, self.order)
+        return CRprod(new_operands, self.variable)
 
         
 
@@ -174,7 +177,7 @@ class CRtrig(CR):
         left = [self[i].copy() if i < hl else CRnum(0) for i in range(len(self))]
         right = [self[i+hl].copy() if i < hl else CRnum(1) for i in range(len(self))]
         new_operands = left+ right
-        return CRtrig(new_operands,self.order)
+        return CRtrig(new_operands,self.variable)
     
     def simplify(self):
         hl = len(self)//2
@@ -183,7 +186,7 @@ class CRtrig(CR):
         return self
     
     def _suffixhash(self):
-        prev = f"{CRtrig.__name__}({self.order})".encode()
+        prev = f"{CRtrig.__name__}({self.variable})".encode()
         suffix_hashes = [None for i in range(len(self)//2)]
         for i in range(len(self)//2):
             h = hashlib.blake2b()
@@ -212,9 +215,13 @@ class CRcot(CRtrig):
     def valueof(self): return  self.operands[len(self)//2].valueof()/ self.operands[0].valueof()
 
 class CRE(CR):
-    def __init__(self, operands, order):
-        super().__init__(operands, order)
-        self.min_order = min(operands,key= lambda x: x.order)
+    def __init__(self, operands, variable):
+        super().__init__(operands, variable)
+        least_variable = sympy.Symbol('\U0010ffff')
+        for operand in operand:
+            if operand.variable.name < least_variable.name:
+                least_variable = operand.variable
+        self.least_variable = least_variable 
 
     def realize(self): 
         return [operand.valueof() for operand in self]
@@ -251,7 +258,7 @@ class CREconnector(CRE):
     def __init__(self, source, index = -1):
         self.operands = [source]
         self.index = index
-        self.order = source.order
+        self.variable = source.variable
         self.f_valueof = None
 
     def valueof(self):

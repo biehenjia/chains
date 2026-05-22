@@ -18,7 +18,7 @@ def mulCRnumCRnum(l: CRnum, r: CRnum):
 def mulCRsumCRnum(l: CRsum, r: CRnum):
 
     operands = [l[i] * r for i in range(len(l))]
-    return CRsum(operands, l.order)
+    return CRsum(operands, l.variable)
 
 @CRalgebra.defineBinary(MUL, CRsum, CRsum, commutative=True)
 def mulCRsumCRsum(l: CRsum, r: CRsum):
@@ -37,19 +37,19 @@ def mulCRsumCRsum(l: CRsum, r: CRsum):
 
             r1 += l[j] * r2
         operands[i] = r1
-    return CRsum(operands, l.order)
+    return CRsum(operands, l.variable)
 
 @CRalgebra.defineBinary(MUL, CRprod, CRprod, commutative=True)
 def mulCRprodCRprod(l: CRprod, r: CRprod):
     if len(r) > len(l): l, r = r, l
     operands = [l[i] * r[i] if i < len(r) else l[i] for i in range(len(l))]
-    return CRprod(operands, l.order)
+    return CRprod(operands, l.variable)
 
 @CRalgebra.defineBinary(MUL, CRprod, CRnum, commutative=True)
 def mulCRprodCRnum(l: CRprod, r: CRnum):
     operands = [l[i] for i in range(len(l))]
     operands[0] *= r
-    return CRprod(operands, l.order)
+    return CRprod(operands, l.variable)
 
 # CASES FOR SIN AND COS
 
@@ -69,7 +69,7 @@ def mulCRprodCRtrig(l: CRprod, r: CRcos):
         o2 = l
         newlength = len(r)//2
     new_operands = [o1[i]*o2[i] if i < newlength else o1[i] * o2[i-newlength] for i in range(newlength*2)]
-    return CRcos(new_operands,r.order)
+    return CRcos(new_operands,r.variable)
 
 #TODO: fix mul case for 
 @CRalgebra.defineBinary(MUL, CRprod, CRsin, commutative=True)
@@ -88,21 +88,21 @@ def mulCRprodCRtrig(l: CRprod, r: CRsin):
         newlength = len(r)//2
     
     new_operands = [o1[i]*o2[i] if i < newlength else o1[i] * o2[i-newlength] for i in range(newlength*2)]
-    return CRsin(new_operands,r.order)
+    return CRsin(new_operands,r.variable)
 
 @CRalgebra.defineBinary(MUL, CRsin, CRnum, commutative=True)
 def mulCRsinCRnum(l: CRsin, r: CRnum):
     new_operands = [l[i] for i in range(len(l))]
     new_operands[0] *= r
     new_operands[len(l)//2] *= r
-    return CRsin(new_operands, l.order)
+    return CRsin(new_operands, l.variable)
 
 @CRalgebra.defineBinary(MUL, CRcos, CRnum, commutative=True)
 def mulCRcosCRnum(l: CRcos, r: CRnum):
     new_operands = [l[i] for i in range(len(l))]
     new_operands[0] *= r
     new_operands[len(l)//2] *= r
-    return CRcos(new_operands, l.order)
+    return CRcos(new_operands, l.variable)
 
 
 # --- DEFAULTS ---
@@ -110,5 +110,6 @@ def mulCRcosCRnum(l: CRcos, r: CRnum):
 
 @CRalgebra.defineDefault(MUL)
 def defaultMul(l, r):
-    return CREmul([l.copy(), r.copy()], max(l.order,r.order))
+    variable = l.variable if l.variable.name > r.variable.name else r.variable
+    return CREmul([l.copy(), r.copy()], variable)
 
