@@ -262,7 +262,7 @@ class CREconnector(CRE):
         self.operands = [source]
         self.index = index
         self.variable = source.variable
-        self.f_valueof = None
+        self.parent_type = None
 
     def valueof(self):
         if self.index == -1:

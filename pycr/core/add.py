@@ -13,9 +13,6 @@ def addCRsumCRnum(l: CRsum, r: CRnum):
 
 @CRalgebra.defineBinary(ADD, CRsum, CRsum, commutative=True)
 def addCRsumCRsum(l: CRsum, r: CRsum):
-    print('here!')
-    print(l)
-    print(r)
     if len(r) > len(l):
         l, r = r, l
     new_operands = [l[i] + r[i] if i < len(r) else l[i] for i in range(len(l))]

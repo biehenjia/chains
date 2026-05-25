@@ -61,11 +61,28 @@ def emit_access_vec(builder, node, work ,scalar_type, W):
     if len(slc) > 1:
         second = ld(slc[1])
         mid = ld(slc[len(node)//2])
+
     if isinstance(node, (CRsum, CRprod, CRsin)): return first
     elif isinstance(node, CRcos): return mid
     elif isinstance(node, CRtan): return builder.fdiv(first, mid)
     elif isinstance(node, CRcot): return builder.fdiv(mid, first)
-    elif isinstance(node, CREconnector): return emit_access_vec(builder, node[0], work,scalar_type, W)
+    elif isinstance(node, CREconnector):
+        child_slc = work[node[0].start: node[0].start+ len(node[0])]
+        child_first = ld(child_slc[0])
+        if len(slc) > 1:
+            child_second = ld(child_slc[1])
+            child_mid = ld(child_slc[len(node)//2])
+
+        if node.index == -1:
+
+            if isinstance(node[0], CRtrig) and type(node[0]) != node.parent_type:
+                if isinstance(node[0], CRsin): return child_first
+                elif isinstance(node[0], CRcos): return child_mid
+                elif isinstance(node[0], CRtan): return builder.fdiv(child_first, child_mid)
+                elif isinstance(node[0], CRcot): return builder.fdiv(child_mid, child_first)
+        else:
+            return ld(child_slc[node.index])
+
     elif isinstance(node, CREadd): return builder.fadd(first, second)
     elif isinstance(node, CREmul): return builder.fmul(first, second)
     elif isinstance(node, CREpow): return builder.call(_intr(mod, "pow", scalar_type, W, 2), [first, second])
@@ -119,20 +136,22 @@ def emit_shift_vec(builder, node, work, scalar_type, W):
 
 
 def emit_fetch_vec(builder, node, work, scalar_type, W):
+    
     if isinstance(node, CRE):
         for i, child in enumerate(node):
-            if isinstance(child, CRE) and child.least_variable != node.variabe:
+            if isinstance(child, CRE) and child.least_variable != node.variable:
+                storeval = emit_access_vec(builder, child, work, scalar_type, W)
                 builder.store(
-                    emit_access_vec(builder, child, work, scalar_type, W),
-                    work[node.start + i]
+                    storeval, work[node.start + i]
                 )
     else:
+        
         for i, child in enumerate(node):
             if isinstance(child, CRnum):
                 continue
             if child.variable != node.variable:
-                builder.store(
-                    emit_access_vec(builder, child, work, scalar_type, W),
+                storeval = emit_access_vec(builder, child, work, scalar_type, W)
+                builder.store(storeval,
                     work[node.start + i]
                 )
 
@@ -171,6 +190,7 @@ def emit_nested_vec(builder, orders, bounds, work, consts, out_ptr, strides, roo
     def body(builder, idx):
         idxs = indices + (idx,)
         if last:
+            
             # idx here is the vector-lane index (step=1 in IR, but each write is W scalars)
             lidx = linear_idx(builder, idxs, strides)
             val  = emit_access_vec(builder, root, work, scalar_type, W)

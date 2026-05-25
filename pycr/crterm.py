@@ -28,16 +28,16 @@ class CRterm:
         self.orders = []
         self.tape = []
 
-    def prepare(self, environment, eliminate=False, vectorization = 1):
+    def prepare(self, environment, eliminate=False, vectorization = 1, outer_step=None):
         if eliminate:
             self.cr = cse({}, self.cr)
         
-        total_length = self.align_starts()
-        self.construct_tape(total_length)
+        # total_length = self.align_starts()
+        self.construct_tape()
         self.sort_variables() 
         self.partition_orders()
         if vectorization> 1 :
-            self.vectorize_tape(vectorization)
+            self.vectorize_tape(vectorization, outer_step)
             
         
         self.evaluate_tape(environment, vectorization > 1)
@@ -64,56 +64,64 @@ class CRterm:
                 continue
             self.orders[self.varmap[member.variable]].append(member)
 
-    def construct_tape(self, total_length):
+    def construct_tape(self):
         p = list(self.cr.postorder())
-        self.tape = [p[i].valueof() for i in range(total_length)]
+        tape = []
+        for cr in p:
+            if not isinstance(cr, CRnum):
+                cr.start = len(tape)
+                for operand in cr:
+                    tape.append(operand.valueof())
+        self.tape = tape
+        
     
     def evaluate_tape(self, environment, vectorized = False):
         if vectorized:
             for i in range(len(self.tape)):
                 for j in range(len(self.tape[i])):
-                    self.tape[i][j] = self.tape[i][j].subs(environment)
+                    self.tape[i][j] = (self.tape[i][j].subs(environment))
         else:
             for i in range(len(self.tape)):
-                self.tape[i] = self.tape[i].subs(environment)
+                self.tape[i] = (self.tape[i].subs(environment))
         
         
 
-    def align_starts(self):
-        postorder = self.cr.postorder()
-        i = 0
-        for cr in postorder:
-            if isinstance(cr, CRnum):
-                continue
-            cr.start = i
-            i += len(cr)
-        return i
+    # def align_starts(self):
+    #     postorder = self.cr.postorder()
+    #     i = 0
+    #     for cr in postorder:
+    #         if isinstance(cr, CRnum):
+    #             continue
+    #         cr.start = i
+    #         i += len(cr)
+    #     return i
     
-    def vectorize_tape(self, vectorization):
+    def vectorize_tape(self, vectorization, outer_step):
         newtape = [None for i in range(len(self.tape))]
         for i in range(len(self.tape)):
             piece = [None for i in range(vectorization)]
             for j in range(vectorization):
-                piece[j] = self.tape[i].subs('t',j)
+                piece[j] = self.tape[i].subs('t',j*outer_step)
             newtape[i] = piece
         self.tape = newtape
+    
 
 
 def cse(table, cr: CR):
-    if isinstance(cr, CRnum):
-        return cr
+    if isinstance(cr, CRnum): return cr
     operands = [cse(table, operand) for operand in cr]
     copy = type(cr)(operands, cr.variable)
     return intern(table, copy)
 
 def intern(table, cr: CR):
-    if isinstance(cr, CRnum):
-        return cr
+    if isinstance(cr, CRnum): return cr
     crhash = cr.crhash()
     suffixes = cr._suffixhash()
     if crhash in table:
         original_cr = table[crhash]
-        return CREconnector(original_cr)
+        res = CREconnector(original_cr)
+        res.parent_type = type(cr)
+        return res
     else:
         table[crhash] = cr
     if isinstance(cr, CRtrig):
@@ -123,9 +131,9 @@ def intern(table, cr: CR):
                 original_cr = table[suffixes[i]]
                 operands = [cr[j].copy() for j in range(i)]
                 operands += [CREconnector(original_cr,i )]
-                operands +=[cr[j+hl] for j in range(i)]
+                operands +=[cr[j+hl].copy() for j in range(i)]
                 operands += [CREconnector(original_cr,i+hl)]
-                return CRtrig(operands, cr.variable)
+                return type(cr)(operands, cr.variable)
             else:
                 table[suffixes[i]] = cr
                 pass

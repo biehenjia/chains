@@ -9,17 +9,20 @@ from collections import namedtuple
 
 
 
-def cr_compile(expression, environment):
+def cr_compile(expression, environment, outer_step):
     expr = sympy.parsing.sympy_parser.parse_expr(expression)
     cr = crmake(expr, sympy.Symbol('y'), 2)
     term = CRterm(cr)
-    term.prepare(environment, True,2)
+    term.prepare(environment, False,2, outer_step)
+    with open("thing.txt",'w') as f:
+        f.write(str(term.cr))
+    for row in term.tape:
+        print(row)
     return compile_cr_vec(term,llvmlite.ir.FloatType(), 2)
 
 def cr_scalarcompile(expression, environment):
     expr = sympy.parsing.sympy_parser.parse_expr(expression)
     cr = crmake(expr)
-    print(cr)
     term = CRterm(cr)
     term.prepare(environment, True)
     # return compile_cr(term, llvmlite.ir.FloatType())
