@@ -1,4 +1,4 @@
-from .core import *
+from ..core import *
 import sympy
 # purpose
 '''
@@ -18,9 +18,12 @@ RESPONSABILITIES:
 - holds bounds information (? can be stateless)
 """
 
+# should also store a portion of the expression they came from
+
 class CRterm:
     cr: CR
     tape: list[sympy.Expr]
+    
 
     def __init__(self,cr):
         self.cr = cr
@@ -73,7 +76,7 @@ class CRterm:
                 for operand in cr:
                     tape.append(operand.valueof())
         self.tape = tape
-        
+            
     
     def evaluate_tape(self, environment, vectorized = False):
         if vectorized:

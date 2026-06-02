@@ -16,7 +16,6 @@ def mulCRnumCRnum(l: CRnum, r: CRnum):
 
 @CRalgebra.defineBinary(MUL, CRsum, CRnum, commutative=True)
 def mulCRsumCRnum(l: CRsum, r: CRnum):
-
     operands = [l[i] * r for i in range(len(l))]
     return CRsum(operands, l.variable)
 

@@ -1,5 +1,0 @@
-CRsin(y)
-├─ CRnum(exp(t + y_0)*sin(t + y_0))
-├─ CRnum(exp(2*y_h)*sin(2*y_h))
-├─ CRnum(exp(t + y_0)*cos(t + y_0))
-└─ CRnum(exp(2*y_h)*cos(2*y_h))

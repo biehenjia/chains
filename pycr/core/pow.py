@@ -72,5 +72,5 @@ def powCRprodCRsum(l: CRprod, r: CRsum):
 # --- DEFAULTS ---
 @CRalgebra.defineDefault(POW)
 def defaultPow(l, r):
-    variable = l.variable if l.variable.name > r.variable.name else r.variable.name
+    variable = l.variable if l.variable.name > r.variable.name else r.variable
     return CREpow([l.copy(), r.copy()], variable)
