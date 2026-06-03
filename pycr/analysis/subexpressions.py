@@ -2,9 +2,10 @@ from .crconfig import CRconfig
 from ..core import *
 import hashlib, sympy
 
-def assign_suffixhashes(env: dict[CR, CRconfig], root: CR):
-    for cr in root.postorder():
-        pass
+def cse(table: dict[bytes, CR], cr:CR):
+    if isinstance(cr, CRnum): return cr
+    operands = [cse(table, operand) for operand in cr]
+    copy = type(cr)(operands, cr.variable)
 
 def intern(env: dict[CR, CRconfig], table: dict[bytes, CR], root: CR):
     if isinstance(root, CRnum): return root
@@ -66,7 +67,6 @@ def intern_full(env: dict[CR, CRconfig], cr: CR, table: dict[bytes, CR]):
             return intern_crtrig(suffixes, cr, table)
         else:
             return intern_default(suffixes, cr, table)
-
 
 def intern_crtrig(suffixes: list[bytes], cr: CRtrig, table: dict[bytes, CR]):
     hl = len(cr)//2

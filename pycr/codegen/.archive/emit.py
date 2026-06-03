@@ -82,7 +82,7 @@ def emit_shift(builder, node, start, length, work, policy, starts):
     def ld(s): return builder.load(s)
     def st(v, s): builder.store(v, s)
 
-    if isinstance(node, CRsum):
+    if isinstance(node):
         for i in range(len(slc) - 1):
             st(builder.fadd(ld(slc[i]), ld(slc[i + 1])), slc[i])
 
