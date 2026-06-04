@@ -7,12 +7,7 @@ def cse(table: dict[bytes, CR], cr:CR):
     operands = [cse(table, operand) for operand in cr]
     copy = type(cr)(operands, cr.variable)
 
-def intern(env: dict[CR, CRconfig], table: dict[bytes, CR], root: CR):
-    if isinstance(root, CRnum): return root
-    if not env[root].suffix_hashes:
-        env[root].suffix_hashes = None
-
-def suffix_hash_default(env: dict[CR, CRconfig], cr: CR):
+def _suffix_hash_default(env: dict[CR, CRconfig], cr: CR):
     if env[cr].suffix_hashes: return
     prev = f"{type(cr)}({cr.variable})".encode()
     suffix_hashes = [None for i in range(len(cr))]
@@ -24,14 +19,14 @@ def suffix_hash_default(env: dict[CR, CRconfig], cr: CR):
         prev = suffix_hashes[-i-1]
     env[cr].suffix_hashes = suffix_hashes
 
-def suffix_hash_crnum(env: dict[CR, CRconfig], cr: CRnum):
+def _suffix_hash_crnum(env: dict[CR, CRconfig], cr: CRnum):
     if env[cr].suffix_hashes: return
     h = hashlib.blake2b()
     s = f"{type(cr)}({sympy.srepr(cr.value)})".encode()
     h.update(s)
     env[cr].suffix_hashes = [h.digest()]
 
-def suffix_hash_crtrig(env: dict[CR, CRconfig], cr: CRtrig):
+def _suffix_hash_crtrig(env: dict[CR, CRconfig], cr: CRtrig):
     if env[cr].suffix_hashes: return
     
     prev = f"CRtrig({cr.variable})".encode()
@@ -48,10 +43,10 @@ def suffix_hash_crtrig(env: dict[CR, CRconfig], cr: CRtrig):
 
 def intern_full(env: dict[CR, CRconfig], cr: CR, table: dict[bytes, CR]):
     if isinstance(cr, CRnum): 
-        suffix_hash_crnum(env, cr)
+        _suffix_hash_crnum(env, cr)
         return cr
-    elif isinstance(cr, CRtrig): suffix_hash_crtrig(env, cr)
-    else: suffix_hash_default(env, cr)
+    elif isinstance(cr, CRtrig): _suffix_hash_crtrig(env, cr)
+    else: _suffix_hash_default(env, cr)
 
     suffixes = env[cr].suffix_hashes
     cr_hash = suffixes[0]
@@ -59,16 +54,16 @@ def intern_full(env: dict[CR, CRconfig], cr: CR, table: dict[bytes, CR]):
     if cr_hash in table:
         original_cr = table[cr_hash]
         res = CREconnector(original_cr)
-        res.parent_type = type(cr)
+        res.original = cr
         return res
     
     else:
         if isinstance(cr, CRtrig):
-            return intern_crtrig(suffixes, cr, table)
+            return _intern_crtrig(suffixes, cr, table)
         else:
-            return intern_default(suffixes, cr, table)
+            return _intern_default(suffixes, cr, table)
 
-def intern_crtrig(suffixes: list[bytes], cr: CRtrig, table: dict[bytes, CR]):
+def _intern_crtrig(suffixes: list[bytes], cr: CRtrig, table: dict[bytes, CR]):
     hl = len(cr)//2
     for i in range(1, hl-1):
         if suffixes[i] in table:
@@ -79,7 +74,7 @@ def intern_crtrig(suffixes: list[bytes], cr: CRtrig, table: dict[bytes, CR]):
             table[suffixes[i]] = cr
     return cr
         
-def intern_default(suffixes: list[bytes], cr: CR, table: dict[bytes, CR]):
+def _intern_default(suffixes: list[bytes], cr: CR, table: dict[bytes, CR]):
     for i in range(1, len(cr)-1):
         if suffixes[i] in table:
             original_cr = table[suffixes[i]]

@@ -1,4 +1,4 @@
-from ..core import *
+from ...core import *
 import sympy
 import hashlib
 # should this just be a file that generates a 

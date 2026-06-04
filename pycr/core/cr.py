@@ -9,11 +9,11 @@ class CR:
     variable: sympy.Symbol
     expr: sympy.Expr
 
-    def __init__(self, operands, variable): 
+    def __init__(self, operands: list["CR"], variable: sympy.Symbol): 
         self.operands = operands
         self.variable = variable
     def __len__(self): return len(self.operands) 
-    def __getitem__(self, key): return self.operands[key]
+    def __getitem__(self, key)-> CR: return self.operands[key]
     def valueof(self): return self[0].valueof()
     def postorder(self):
         for operand in self.operands: yield from operand.postorder()
@@ -187,7 +187,7 @@ class CRcot(CRtrig):
     def valueof(self): return  self.operands[len(self)//2].valueof()/ self.operands[0].valueof()
 
 class CRE(CR):
-    def __init__(self, operands, variable): super().__init__(operands, variable)
+    def __init__(self, operands, variable: sympy.Symbol): super().__init__(operands, variable)
     def realize(self): return [operand.valueof() for operand in self]
 
 # necessary?? already in position to use ops table + lambda/f lookup
@@ -217,12 +217,13 @@ class CREcot(CRE):
 
 # shouldn't even have a source. It will be a child node of a CRobject
 class CREconnector(CRE):
-    def __init__(self, source, index = -1):
+    def __init__(self, source: CR, index = -1):
         self.operands = [source]
         self.index = index
         self.variable = source.variable
-        self.parent_type = None
+        self.original = None
 
+    # fix for printing
     def valueof(self):
         if self.index == -1: return self.operands[0].valueof()
         else: return self.operands[0][self.index].valueof()
