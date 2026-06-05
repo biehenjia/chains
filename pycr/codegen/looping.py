@@ -5,13 +5,13 @@ from .registers import *
 class LoopHandle(NamedTuple):
     idx: ir.PhiInstr
     header: ir.Block
-    body: ir.Block
     exit: ir.Block
+    stride: int
 
-def begin_loop(registers: Registers, n: ir.Value)-> LoopHandle:
-    builder = registers.builder
+def begin_loop(regs: Registers, n: ir.Value, stride: int = 1) -> LoopHandle:
+    builder = regs.builder
     fn = builder.function
-    pre = builder.block 
+    pre = builder.block
     h = fn.append_basic_block("loop.h")
     b = fn.append_basic_block("loop.b")
     x = fn.append_basic_block("loop.x")
@@ -21,19 +21,18 @@ def begin_loop(registers: Registers, n: ir.Value)-> LoopHandle:
     idx.add_incoming(ir.Constant(i64, 0), pre)
     builder.cbranch(builder.icmp_signed("<", idx, n), b, x)
     builder.position_at_end(b)
-    return LoopHandle(idx, h, x)
+    regs.indices.append(idx)
+    return LoopHandle(idx, h, x, stride)
 
 def end_loop(regs: Registers, handle: LoopHandle) -> None:
     builder = regs.builder
     latch = builder.block
-    nxt = builder.add(handle.idx, ir.Constant(i64, 1))
+    nxt = builder.add(handle.idx, ir.Constant(i64, handle.stride))
     handle.idx.add_incoming(nxt, latch)
     builder.branch(handle.header)
     builder.position_at_end(handle.exit)
+    regs.indices.pop()
 
-def emit_reset(registers: Registers, start, length):
-    builder = registers.builder
-    constants = registers.constants
-    for i in range(start, start+length):
-        registers[i] = constants[i]
+
+
 

@@ -3,15 +3,15 @@ from .registers import *
 
 # accessing patterns; abstracted
 
-def access_first(registers: Registers, start, length):return registers[start]
-def access_mid(registers: Registers, start, length):return registers[start+length//2]
-def access_tan(registers: Registers, start, length): return registers.div(registers[start], registers[start+length//2])
-def access_cot(registers: Registers, start, length): return registers.div(registers[start+length//2], registers[start])
-def access_cre_add(registers: Registers, start, length): return registers.add(registers[start], registers[start+1])
-def access_cre_mul(registers: Registers, start, length): return registers.mul(registers[start], registers[start+1])
-def access_cre_pow(registers: Registers, start, length): return registers.pow(registers[start], registers[start+1])
-def access_cre_log(registers: Registers, start, length): return registers.logab(registers[start], registers[start+1])
-def access_cre_sin(registers: Registers, start, length): return registers.sin(registers[start])
-def access_cre_cos(registers: Registers, start, length): return registers.cos(registers[start])
-def access_cre_tan(registers: Registers, start, length): return registers.tan(registers[start])
-def access_cre_cot(registers: Registers, start, length): return registers.cot(registers[start])
+def access_first(regs: Registers, start, length):return regs[start]
+def access_mid(regs: Registers, start, length):return regs[start+length//2]
+def access_tan(regs: Registers, start, length): return regs.div(regs[start], regs[start+length//2])
+def access_cot(regs: Registers, start, length): return regs.div(regs[start+length//2], regs[start])
+def access_cre_add(regs: Registers, start, length): return regs.add(regs[start], regs[start+1])
+def access_cre_mul(regs: Registers, start, length): return regs.mul(regs[start], regs[start+1])
+def access_cre_pow(regs: Registers, start, length): return regs.pow(regs[start], regs[start+1])
+def access_cre_log(regs: Registers, start, length): return regs.logab(regs[start], regs[start+1])
+def access_cre_sin(regs: Registers, start, length): return regs.sin(regs[start])
+def access_cre_cos(regs: Registers, start, length): return regs.cos(regs[start])
+def access_cre_tan(regs: Registers, start, length): return regs.tan(regs[start])
+def access_cre_cot(regs: Registers, start, length): return regs.cot(regs[start])

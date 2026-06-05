@@ -16,8 +16,9 @@ def initialize_env(root: CR):
     for cr in root.postorder():
         env[cr] = CRconfig(cr)
         least_variable = cr.variable
-        for child in cr:
-            if not isinstance(child, CRnum):
-                least_variable = min(least_variable, child.variable)
+        if not isinstance(cr, CRnum):
+            for child in cr:
+                if not isinstance(child, CRnum):
+                    least_variable = min(least_variable, child.variable)
         env[cr].least_variable = least_variable
     return env

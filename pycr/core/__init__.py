@@ -18,10 +18,3 @@ __all__ = [
     'sin', 'cos', 'tan','cot', 'log'
 ]
 
-op1 = CRnum(sympy.Symbol('x_0'))
-op2 = CRnum(sympy.Symbol('x_h'))
-x = CRsum([op1,op2],sympy.Symbol('x'))
-x.expr = sympy.Symbol('x')
-
-x2 = x*x
-print(x2)

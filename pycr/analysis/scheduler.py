@@ -22,19 +22,18 @@ def vectorize_tape(tape: list[sympy.Expr], vector_0: sympy.Symbol, vector_h: sym
     return vectorized
 
 def extract_symbols(root: CR) -> list[sympy.Symbol]:
-    symbols = {}
+    symbols = set()
     for cr in root.postorder():
-        if isinstance(cr, CRnum):
-            symbols |= cr.valueof().free_symbols
+        if not isinstance(cr, CRnum):
+            symbols |= {cr.variable}
     return sorted(symbols,key=str)
 
 def partition_orders(env: dict[CR, CRconfig], root: CR):
     symbols = extract_symbols(root)
-    sorted_symbols = sorted(symbols, key = str)
     ordering = {}
     traces_byorder = [[] for i in range(len(symbols))]
-    for i in range(len(sorted_symbols)):
-        symbol = sorted_symbols[i]
+    for i in range(len(symbols)):
+        symbol = symbols[i]
         symbol_name = symbol.name
         ordering[symbol_name] = i
     for cr in root.postorder():

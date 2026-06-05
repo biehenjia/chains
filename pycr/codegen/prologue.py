@@ -16,12 +16,12 @@ def _element_type(arr: numpy.ndarray) -> ir.Type:
         return ir.VectorType(base, arr.shape[1])
     return base
 
-def emit_signature(result: numpy.ndarray, tape: numpy.ndarray) -> ir.FunctionType:
-    dim_len = ir.IntType(64)
+def emit_signature(result, tape):
+    base = DTYPE_TO_IR[result.dtype]
     params = [
-        ir.PointerType(_element_type(result)),
-        ir.PointerType(_element_type(tape)),
-        *([dim_len] * result.ndim),
+        ir.PointerType(base),
+        ir.PointerType(_element_type(tape)), 
+        *([i64] * result.ndim)
     ]
     return ir.FunctionType(ir.VoidType(), params)
 
@@ -29,3 +29,8 @@ def emit_entry_block(module: ir.Module, sig: ir.FunctionType, name: str) -> tupl
     func = ir.Function(module, sig, name=name)
     block = func.append_basic_block("entry")
     return func, ir.IRBuilder(block)
+
+# usage: func, builder = emit_entry_block(module, sig, name)
+# func.args[1].add_attribute('readonly')
+# regs = Registers(builder, [dtype]* n, width)
+# regs.prologue(func.args[1], n)
