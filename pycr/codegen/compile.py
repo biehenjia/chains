@@ -11,42 +11,45 @@ def finalize_module(module: ir.Module, cpu: str= "native", features: str = "+neo
     module.triple = llvm.get_default_triple()
     module.data_layout = llvm.Target.from_default_triple().create_target_machine(cpu=cpu,features=features).target_data
 
-
-def compile_fn(module, func_name, n_dims, features=""):
-    llvm.initialize_native_target()
-    llvm.initialize_native_asmprinter()
-    module.triple = llvm.get_default_triple()
-    cpu = llvm.get_host_cpu_name()
-    tm = llvm.Target.from_default_triple().create_target_machine(cpu=cpu, features=features)
+def make_module(module: ir.Module, tm: llvm.TargetMachine) -> llvm.ModuleRef:
     module.data_layout = tm.target_data
     llvm_mod = llvm.parse_assembly(str(module))
     llvm_mod.verify()
+    return llvm_mod
 
-    pto = llvm.create_pipeline_tuning_options(speed_level=2)
-    pb  = llvm.PassBuilder(tm, pto)
+def optimize(llvm_mod: llvm.ModuleRef, tm: llvm.TargetMachine, pto=None)->None:
+    pto = pto or set_pto()
+    pb = llvm.PassBuilder(tm, pto)
     mpm = pb.getModulePassManager()
     mpm.run(llvm_mod, pb)
 
-    engine = llvm.create_mcjit_compiler(llvm_mod, target_machine=tm)
+def jit(llvm_mod: llvm.ModuleRef, tm: llvm.TargetMachine, func_name, n_dims):
+    engine = llvm.create_mcjit_compiler(llvm_mod, tm)
     engine.finalize_object()
-
+    llvm.check_jit_execution()
+    fn_ptr = engine.get_function_address(func_name)
     argtypes = [ctypes.c_void_p, ctypes.c_void_p] + [ctypes.c_int64] * n_dims
-    cfunc = ctypes.CFUNCTYPE(None, *argtypes)(engine.get_function_address(func_name))
+    cfunc = ctypes.CFUNCTYPE(None, *argtypes)(fn_ptr)
 
     def call(result_arr, tape_arr):
-        print(result_arr.shape, result_arr.dtype, id(result_arr))
         bounds = [ctypes.c_int64(result_arr.shape[i]) for i in range(n_dims)]
-        print(f"result ptr: {result_arr.ctypes.data}")
-        print(f"tape ptr:   {tape_arr.ctypes.data}")
-        print(f"bounds:     {[b.value for b in bounds]}")
-        print(f"fn ptr: {engine.get_function_address(func_name)}")
-        print(func_name)  # should be exactly "penguin"
         cfunc(
             result_arr.ctypes.data_as(ctypes.c_void_p),
             tape_arr.ctypes.data_as(ctypes.c_void_p),
-            *bounds,
+            *bounds
         )
-
-
+    
     call._engine = engine
     return call
+
+def set_pto(speed = 3, vectorize = False) -> llvm.PipelineTuningOptions:
+    pto = llvm.create_pipeline_tuning_options(speed)
+    pto.loop_interleaving = True
+    pto.loop_unrolling = True
+    pto.loop_vectorization = vectorize
+    pto.slp_vectorization = vectorize
+    return pto
+
+def compile_fn(module, func_name, n_dims, cpu=None, features="", pto=None):
+    
+
