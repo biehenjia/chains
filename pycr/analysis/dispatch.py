@@ -51,8 +51,8 @@ def dispatch_fetch(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     cr = cfg.cr
     for i, child in enumerate(cr):
         sub_cfg = env[child]
-        if not isinstance(child, CRnum) and sub_cfg.least_variable != cr.variable:
-            regs[sub_cfg.tape_start] =dispatch_access(regs, sub_cfg, env)
+        if not isinstance(child, CRnum) and sub_cfg.least_variable.name != cr.variable.name:
+            regs[cfg.tape_start+i] =dispatch_access(regs, sub_cfg, env)
 
 
 def dispatch_reset(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):

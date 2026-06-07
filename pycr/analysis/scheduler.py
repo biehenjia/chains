@@ -2,7 +2,7 @@ from ..core import *
 from .crconfig import CRconfig
 import sympy, hashlib, dataclasses
 
-def construct_tape(env: dict[CR, CRconfig], root: CR ):
+def construct_tape(env: dict[CR, CRconfig], root: CR ) -> list[sympy.Expr]:
     tape = []
     # every node has potentially some children
     for cr in root.postorder():

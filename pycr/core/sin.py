@@ -7,7 +7,6 @@ def sinCRnum(u):
 
 @CRalgebra.defineUnary(SIN, CRsum)
 def sinCRsum(u):
-
     new_operands = [sin(u[i]) if i < len(u) else cos(u[i-len(u)]) for i in range(len(u)*2)]
     return CRsin(new_operands,u.variable)
 

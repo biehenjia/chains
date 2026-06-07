@@ -24,8 +24,11 @@ class Registers(Math):
         self.resultv = self.builder.bitcast(self.result, ir.PointerType(self.rtype))
 
     def prologue(self, n: int):
+        self.constants = []
         for i in range(n):
-            self[i] = self.builder.load(self.builder.gep(self.tape , [ir.Constant(i64, i)]))
+            v = self.builder.load(self.builder.gep(self.tape, [ir.Constant(i64, i)]))
+            self.constants.append(v)
+            self[i] = v
 
     def store_result(self, idx: list[ir.Value], val: ir.Value):
         self.policy.store(self.builder, self.result, self.linearize(idx), val)
@@ -35,7 +38,7 @@ class Registers(Math):
         for idx, bound in zip(indices[1:], self.bounds[1:]):
             acc = self.builder.add(self.builder.mul(acc, bound), idx)
         return acc
-        
+
 def emit_reset(regs: Registers, start, length):
-    constants = regs.constants
-    for i in range(start, start+length): regs[i] = constants[i]
+    for i in range(start, start + length):
+        regs[i] = regs.constants[i]

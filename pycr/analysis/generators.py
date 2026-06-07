@@ -7,17 +7,19 @@ def generate_nested(regs, traces_byorder, env, policy):
 
     for i in range(dimensions - 1):
         latches.append(begin_loop(regs, regs.bounds[i]))
+        generate_loop(regs, traces_byorder[i], env)
 
-    inner = begin_loop(regs, regs.bounds[dimensions - 1], policy.W)
+
+    latches.append(begin_loop(regs, regs.bounds[dimensions - 1], policy.W))
     generate_loop(regs, traces_byorder[-1], env, final=True)
-    end_loop(regs, inner)
-    policy.emit_tail(regs.builder, regs.result, regs[0], inner.idx, regs.bounds[dimensions - 1])
+    policy.emit_tail(regs.builder, regs.result, regs[0], latches[-1].idx, regs.bounds[dimensions - 1])
+    end_loop(regs, latches.pop())
 
-    for i, order in enumerate(reversed(traces_byorder[:-1])):
-        generate_loop(regs, order, env)
+    for i in range(dimensions-1):
+        order = traces_byorder[-i-1]
+        generate_cleanup(regs, order, env)
         end_loop(regs, latches.pop())
 
-        generate_cleanup(regs, order, env)
 
 def generate_loop(regs: Registers, order: list[CR], env: dict[CR, CRconfig], final=False):
     if final:

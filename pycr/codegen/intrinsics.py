@@ -16,13 +16,11 @@ v8f32 =ir.VectorType(f32, 8)
 v2f64 = ir.VectorType(f64, 2)
 v4f64 = ir.VectorType(f64, 4)
 
-def vec(scalar_type: ir.Type, width: int) -> ir.VectorType:
-    return ir.VectorType(scalar_type, width)
+def vec(scalar_type: ir.Type, width: int) -> ir.VectorType: return ir.VectorType(scalar_type, width)
 
 def call_intrinsic(builder: ir.IRBuilder, name: str, reg_type: ir.Type, args: list) -> ir.Value:
     fn = builder.module.declare_intrinsic(name, [reg_type])
     return builder.call(fn, args)
-
 
 def call_libfn(builder: ir.IRBuilder, name: str, reg_type: ir.Type, args: list) -> ir.Value:
     module = builder.module

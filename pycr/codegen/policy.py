@@ -1,6 +1,5 @@
 from llvmlite import ir
 
-
 class LanePolicy:
     def __init__(self, scalar_type: ir.Type, W):
         self.scalar_type = scalar_type
@@ -34,4 +33,3 @@ class VectorPolicy(LanePolicy):
                 with builder.if_then(builder.icmp_signed("<", li64, rem)):
                     elem = builder.extract_element(val, li32)
                     builder.store(elem, builder.gep(out_ptr, [builder.add(idx, li64)]))
-        

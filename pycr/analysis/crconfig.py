@@ -19,6 +19,6 @@ def initialize_env(root: CR):
         if not isinstance(cr, CRnum):
             for child in cr:
                 if not isinstance(child, CRnum):
-                    least_variable = min(least_variable, child.variable)
+                    least_variable = min(least_variable, child.variable, key=str)
         env[cr].least_variable = least_variable
     return env

@@ -4,47 +4,67 @@ from .generators import *
 from .scheduler import *
 from .subexpressions import *
 
-def test_scalar(cr: CR):
-    env = initialize_env(cr)
+def generate_scalar(cr: CR, dtype = numpy.float32, seeding=None, name="penguin"):
+    env = initialize_env(cr) # AGNOSTIC
+    symbols = extract_symbols(cr) # AGNOSTIC
     policy = ScalarPolicy(f32)
+    module = ir.Module(name="kernel") # AGNOSTIC
+    # vvvvv kind of agnostic because the x_h doesn't change but x_0 changes, we can throw it into a transformation pipeline
+    seeding = seeding or {f"{v.name}_0":0 for v in symbols} | {f"{v.name}_h":1 for v in symbols}
+    n_dims = len(symbols) #AGNOSTIC
+    dims = list(1 for i in range(n_dims)) #AGNOSTIC
+    temp_res = numpy.zeros(dims,dtype=dtype) #AGNOSTICm but requires vectorization support
+    tape = construct_tape(env, cr)# AGNOSTIC, but requires an additonal step to parallelize
+    tape_np = numpy.array([v.subs(seeding) for v in tape],dtype=dtype) #
 
-    res = numpy.zeros(100,dtype=numpy.float32)
-    tape = construct_tape(env, cr)
-    tape = numpy.zeros(10, dtype=numpy.float32)
+    ftype = emit_signature(temp_res, tape_np)
+    func,builder = emit_entry_block(module, ftype, name)
 
-    module = ir.Module(name="kernel")
-    ftype = emit_signature(res,tape)
-    func, builder = emit_entry_block(module, ftype, "penguin")
+    regs = Registers(builder, policy, len(tape))# AGNOSTIC
+    regs.bind(func, n_dims) #AGNOSTIC
+    regs.prologue(len(tape)) #AGNOSTIC
+    traces_byorder = partition_orders(env, cr) #AGNOSTIC
+    generate_nested(regs, traces_byorder, env, policy)# AGNOSTIC
+    builder.ret_void() #AGNOSTIC
 
-    regs = Registers(builder, policy,3)
-    regs.bind(func, 1)
-    regs.prologue(3)
-    traces_byorder = partition_orders(env, cr) 
-    generate_nested(regs, traces_byorder, env, policy)
-    builder.ret_void()
-    call = compile_fn(module, "penguin", res.ndim)
-    return call
+    f = compile_fn(module, name, n_dims) # AGNOSTIC
+    return f, tape_np 
 
-def test_vector(cr: CR):
+def prepare_function(cr: CR, dtype = numpy.float32, policy = LanePolicy, name = "function"):
     env = initialize_env(cr)
-    policy = VectorPolicy(f32, 4)
-    res = numpy.zeros(10, dtype = numpy.float32)
+    symbols = extract_symbols(cr)
+    module = ir.Module(name="kernel")
+    n_dims = len(symbols)
+    temp_res = numpy.zeros(list(1 for i in range(n_dims)))
     tape = construct_tape(env, cr)
-    f = vectorize_tape(tape, sympy.Symbol('x_0'), sympy.Symbol('x_h'), 4)
-    t1 = numpy.array([0,1,4,9],dtype = numpy.float32)
-    t2 = numpy.array([16,24,32,40], dtype= numpy.float32)
-    t3 = numpy.array([32,32,32,32],dtype = numpy.float32)
-    tape = numpy.array([t1,t2,t3], dtype = numpy.float32)
-
-    module = ir.Module(name= "kernel")
-    ftype = emit_signature(res, tape)
-    func, builder = emit_entry_block(module, ftype, "penguin")
-    regs = Registers(builder, policy, 3)
-    regs.bind(func, 1)
-    regs.prologue(3)
-    traces_byorder = partition_orders(env, cr) 
+    if isinstance(policy, VectorPolicy):
+        outer_symbol = max(symbols, key = str)
+        tape = vectorize_tape(tape, f"{outer_symbol.name}_0",f"{outer_symbol}_h", policy.W)
+        tape_np = numpy.zeros((len(tape), policy.W), dtype=dtype)
+    else:
+        tape_np = numpy.zeros(len(tape), dtype = dtype)
+    
+    ftype = emit_signature(temp_res, tape_np)
+    func, builder = emit_entry_block(module, ftype, name)
+    regs = Registers(builder, policy, len(tape))
+    regs.bind(func, n_dims)
+    regs.prologue(len(tape))
+    traces_byorder = partition_orders(env, cr)
     generate_nested(regs, traces_byorder, env, policy)
     builder.ret_void()
-    call = compile_fn(module, "penguin", res.ndim)
-    return call
+    f = compile_fn(module, name, n_dims)
+    return f, tape
+
+def prepare_tape(tape: list[sympy.Expr] | list[list[sympy.Expr]], mapping: dict[str, tuple[float, float]], dtype= numpy.float32):
+    if isinstance(tape[0], list):
+        # vectorized
+        pretape = []
+        for entry in tape:
+            to_np = numpy.list(entry.subs(mapping), dtype=dtype)
+            pretape.append(to_np)
+    else:
+        pretape = [[v.subs(mapping) for v in tape]]
+    return numpy.array(pretape,dtype = dtype)
+
+
 

@@ -11,8 +11,7 @@ CRprod * CRtrig
 '''
 
 @CRalgebra.defineBinary(MUL, CRnum, CRnum, commutative=True)
-def mulCRnumCRnum(l: CRnum, r: CRnum):
-    return CRnum(l.valueof() * r.valueof())
+def mulCRnumCRnum(l: CRnum, r: CRnum): return CRnum(l.valueof() * r.valueof())
 
 @CRalgebra.defineBinary(MUL, CRsum, CRnum, commutative=True)
 def mulCRsumCRnum(l: CRsum, r: CRnum):
@@ -21,8 +20,7 @@ def mulCRsumCRnum(l: CRsum, r: CRnum):
 
 @CRalgebra.defineBinary(MUL, CRsum, CRsum, commutative=True)
 def mulCRsumCRsum(l: CRsum, r: CRsum):
-    if len(r) > len(l):
-        l, r = r,l
+    if len(r) > len(l): l, r = r,l
     n = len(l) - 1
     m = len(r) - 1
     operands = [None for i in range(n+m+1)]

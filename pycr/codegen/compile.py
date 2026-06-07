@@ -2,7 +2,8 @@ import ctypes, numpy
 import llvmlite.binding as llvm
 from .intrinsics import *
 
-
+llvm.initialize_native_target()
+llvm.initialize_native_asmprinter()
 
 def finalize_module(module: ir.Module, cpu: str= "native", features: str = "+neon"):
     llvm.initialize()
@@ -11,7 +12,8 @@ def finalize_module(module: ir.Module, cpu: str= "native", features: str = "+neo
     module.triple = llvm.get_default_triple()
     module.data_layout = llvm.Target.from_default_triple().create_target_machine(cpu=cpu,features=features).target_data
 
-def make_module(module: ir.Module, tm: llvm.TargetMachine) -> llvm.ModuleRef:
+def make_module(module, tm):
+    module.triple = llvm.get_default_triple()
     module.data_layout = tm.target_data
     llvm_mod = llvm.parse_assembly(str(module))
     llvm_mod.verify()
@@ -51,5 +53,13 @@ def set_pto(speed = 3, vectorize = False) -> llvm.PipelineTuningOptions:
     return pto
 
 def compile_fn(module, func_name, n_dims, cpu=None, features="", pto=None):
-    
+    print(str(module))
+    cpu = cpu or llvm.get_host_cpu_name()
+    tm  = llvm.Target.from_default_triple().create_target_machine(cpu=cpu, features=features)
+    llvm_mod = make_module(module, tm)
+    optimize(llvm_mod, tm, pto)
+    print(str(llvm_mod))
+    #print(llvm_mod.get_function(func_name)) 
+    return jit(llvm_mod, tm, func_name, n_dims)
+
 
