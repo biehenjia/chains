@@ -1,5 +1,6 @@
 from llvmlite import ir
 
+
 class LanePolicy:
     def __init__(self, scalar_type: ir.Type, W):
         self.scalar_type = scalar_type
@@ -18,8 +19,9 @@ class ScalarPolicy(LanePolicy):
 
 class VectorPolicy(LanePolicy):
     def store(self, builder, out_ptr, idx, val):
-        vptr = builder.bitcast(out_ptr, ir.PointerType(self.slot_type))
-        builder.store(val, builder.gep(vptr, [idx]), align=4)
+        stamp = builder.sdiv(idx, ir.Constant(ir.IntType(64), self.W))
+        vptr  = builder.bitcast(out_ptr, ir.PointerType(self.slot_type))
+        builder.store(val, builder.gep(vptr, [stamp]))
 
     def emit_tail(self, builder, out_ptr, val, idx, B):
         W = ir.Constant(ir.IntType(64), self.W)
@@ -32,3 +34,4 @@ class VectorPolicy(LanePolicy):
                 with builder.if_then(builder.icmp_signed("<", li64, rem)):
                     elem = builder.extract_element(val, li32)
                     builder.store(elem, builder.gep(out_ptr, [builder.add(idx, li64)]))
+        

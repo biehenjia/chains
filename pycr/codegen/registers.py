@@ -14,9 +14,7 @@ class Registers(Math):
         Math.__init__(self, builder, self.rtype)
 
     def __getitem__(self, i): return self.builder.load(self.slots[i])
-    def __setitem__(self, i, v): 
-        
-        self.builder.store(v, self.slots[i])
+    def __setitem__(self, i, v): self.builder.store(v, self.slots[i])
     def __len__(self): return len(self.slots)
 
     def bind(self, func, n_dims):
@@ -37,14 +35,8 @@ class Registers(Math):
         self.policy.store(self.builder, self.result, self.linearize(idx), val)
 
     def linearize(self, indices: list[ir.Value]) -> ir.Value:
-        bounds = list(self.bounds)
-        indices = list(indices)
-        if hasattr(self.policy, 'W'):
-            W = ir.Constant(i64, self.policy.W)
-            bounds[-1] = self.builder.udiv(bounds[-1], W)
-            indices[-1] = self.builder.udiv(indices[-1], W)
         acc = indices[0]
-        for idx, bound in zip(indices[1:], bounds[1:]):
+        for idx, bound in zip(indices[1:], self.bounds[1:]):
             acc = self.builder.add(self.builder.mul(acc, bound), idx)
         return acc
 

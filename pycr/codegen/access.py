@@ -15,3 +15,4 @@ def access_cre_sin(regs: Registers, start, length): return regs.sin(regs[start])
 def access_cre_cos(regs: Registers, start, length): return regs.cos(regs[start])
 def access_cre_tan(regs: Registers, start, length): return regs.tan(regs[start])
 def access_cre_cot(regs: Registers, start, length): return regs.cot(regs[start])
+

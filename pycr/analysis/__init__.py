@@ -63,7 +63,6 @@ def prepare_function(cr: CR, dtype = numpy.float32, policy = LanePolicy, name = 
     ftype = emit_signature(temp_res, tape_np)
     func, builder = emit_entry_block(module, ftype, name)
     regs = Registers(builder, policy, len(tape))
-    print(len(tape))
     regs.bind(func, n_dims)
     regs.prologue(len(tape))
     traces_byorder = partition_orders(env, cr)
@@ -84,8 +83,7 @@ def prepare_tape(tape: list[sympy.Expr] | list[list[sympy.Expr]], mapping: dict[
         
     return numpy.array(pretape,dtype = dtype)
     
-def prepare_parallel(cr, tape, bounds,mapping,dtype,  N):
-    lowest_variable = min(extract_symbols(cr), key=str)
+def prepare_parallel(lowest_variable, tape, bounds,mapping,dtype,  N):
     symbol_0, symbol_h = f"{lowest_variable.name}_0", f"{lowest_variable.name}_h"
     outer_bound = bounds[0]
     
