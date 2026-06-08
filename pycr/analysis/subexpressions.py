@@ -2,10 +2,16 @@ from .crconfig import CRconfig
 from ..core import *
 import hashlib, sympy
 
-def cse(table: dict[bytes, CR], cr:CR):
+def prepare_cse(env: dict[CR, CRconfig], root: CR):
+    for cr in root.postorder():
+        if isinstance(cr, CRnum): _suffix_hash_crnum(env, cr )
+        elif isinstance(cr, CRtrig): _suffix_hash_crtrig(env, cr)
+        else: _suffix_hash_default(env, cr)
+
+def cse(env, table: dict[bytes, CR], cr:CR):
     if isinstance(cr, CRnum): return cr
-    operands = [cse(table, operand) for operand in cr]
-    copy = type(cr)(operands, cr.variable)
+    cr.operands = [cse(env, table, operand) for operand in cr]
+    return intern_full(env, cr, table)
 
 def _suffix_hash_default(env: dict[CR, CRconfig], cr: CR):
     if env[cr].suffix_hashes: return
@@ -28,7 +34,6 @@ def _suffix_hash_crnum(env: dict[CR, CRconfig], cr: CRnum):
 
 def _suffix_hash_crtrig(env: dict[CR, CRconfig], cr: CRtrig):
     if env[cr].suffix_hashes: return
-    
     prev = f"CRtrig({cr.variable})".encode()
     suffix_hashes = [None for i in range(len(cr)//2)]
     for i in range(len(cr)//2):
@@ -45,8 +50,8 @@ def intern_full(env: dict[CR, CRconfig], cr: CR, table: dict[bytes, CR]):
     if isinstance(cr, CRnum): 
         _suffix_hash_crnum(env, cr)
         return cr
-    elif isinstance(cr, CRtrig): _suffix_hash_crtrig(env, cr)
-    else: _suffix_hash_default(env, cr)
+    # elif isinstance(cr, CRtrig): _suffix_hash_crtrig(env, cr)
+    # else: _suffix_hash_default(env, cr)
 
     suffixes = env[cr].suffix_hashes
     cr_hash = suffixes[0]
@@ -72,6 +77,7 @@ def _intern_crtrig(suffixes: list[bytes], cr: CRtrig, table: dict[bytes, CR]):
             return type(cr)(operands,cr.variable)
         else:
             table[suffixes[i]] = cr
+    table[suffixes[0]] = cr
     return cr
         
 def _intern_default(suffixes: list[bytes], cr: CR, table: dict[bytes, CR]):
@@ -83,4 +89,5 @@ def _intern_default(suffixes: list[bytes], cr: CR, table: dict[bytes, CR]):
             return type(cr)(operands, cr.variable)
         else:
             table[suffixes[i]] = cr
+    table[suffixes[0]] = cr
     return cr

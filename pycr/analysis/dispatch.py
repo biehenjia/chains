@@ -2,24 +2,24 @@ from ..codegen import *
 from.crconfig import *
 from ..core import *
 from .scheduler import *
-    
+
 def dispatch_shift(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     cr, start = cfg.cr, cfg.tape_start
     if isinstance(cr, CRsum): emit_sum_shift(regs, start, len(cr))
     elif isinstance(cr, CRprod): emit_crprod_shift(regs, start, len(cr))
     elif isinstance(cr, CRtrig): emit_crtrig_shift(regs, start, len(cr))
     elif isinstance(cr, CRE):
+        
         for i in range(len(cr)):
             if cr[i].variable == cr.variable:
                 child = cr[i]
                 sub_cfg = env[child]
-                dispatch_access(regs, sub_cfg, env)
+                regs[start+i] = dispatch_access(regs, sub_cfg, env)
 
 def dispatch_access(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     cr, start = cfg.cr, cfg.tape_start
     args = (cr, start, len(cr))
     # make idempotent, a little bit sketchy:
-
     table = { 
             CRsum: access_first, CRprod: access_first, CRsin: access_first,
             CRcos: access_mid, CRtan: access_tan, CRcot: access_cot,
@@ -32,14 +32,14 @@ def dispatch_access(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
         sub_cfg = env[cr[0]] # consed subtree
         sub_cr, sub_start = sub_cfg.cr, sub_cfg.tape_start
         if not isinstance(cr.original, CRtrig) or cr.index != -1:
-            dispatch_access(regs, sub_cfg, env)
+            return dispatch_access(regs, sub_cfg, env)
         else:
+            print("original:", cr.original)
             # proof sketch/convince yourself: CREconnector will not recurse
             # NTS: working on the consed subtree tape, but sticking the original access type
-            table[type(cr.original)](regs, sub_start, len(sub_cr))
+            return table[type(cr.original)](regs, sub_start, len(sub_cr))
     else:
         return table[type(cr)](regs, start, len(cr))
-
 
 """
 scratch: 
@@ -52,8 +52,8 @@ def dispatch_fetch(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     for i, child in enumerate(cr):
         sub_cfg = env[child]
         if not isinstance(child, CRnum) and sub_cfg.least_variable.name != cr.variable.name:
-            regs[cfg.tape_start+i] =dispatch_access(regs, sub_cfg, env)
-
+            res = dispatch_access(regs, sub_cfg, env)
+            regs[cfg.tape_start+i] = res 
 
 def dispatch_reset(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     cr, start = cfg.cr, cfg.tape_start

@@ -5,9 +5,17 @@ import sympy, hashlib, dataclasses
 def construct_tape(env: dict[CR, CRconfig], root: CR ) -> list[sympy.Expr]:
     tape = []
     # every node has potentially some children
+    seen = set()
     for cr in root.postorder():
-        env[cr].tape_start = len(tape)
-        if not isinstance(cr, (CRnum, CREconnector) ):
+        if isinstance(cr, CREconnector):
+            env[cr].tape_start = len(tape)
+            tape.append(cr.valueof())
+        elif not isinstance(cr, CRnum ):
+            if cr in seen:
+                continue
+            seen.add(cr)
+            env[cr].tape_start = len(tape)
+            
             for child in cr: tape.append(child.valueof())
     return tape
 
@@ -32,13 +40,23 @@ def partition_orders(env: dict[CR, CRconfig], root: CR):
     symbols = extract_symbols(root)
     ordering = {}
     traces_byorder = [[] for i in range(len(symbols))]
+    
     for i in range(len(symbols)):
         symbol = symbols[i]
         symbol_name = symbol.name
         ordering[symbol_name] = i
+    
+    
+
+    seen = set()
     for cr in root.postorder():
         if not isinstance(cr, CRnum):
+            if cr in seen:
+                continue
+
             traces_byorder[ordering[cr.variable.name]].append(cr)
+            seen.add(cr)
+
     return traces_byorder
 
 

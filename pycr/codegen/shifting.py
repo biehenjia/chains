@@ -4,12 +4,10 @@ from llvmlite import ir
 from .registers import *
 
 def emit_sum_shift(regs:Registers, start, length):
-    for i in range(start, start+length -1):
-        regs[i] = regs.add(regs[i], regs[i+1])
+    for i in range(start, start+length -1): regs[i] = regs.add(regs[i], regs[i+1])
 
 def emit_crprod_shift(regs: Registers, start, length):
-    for i in range(start, start+length -1):
-        regs[i] = regs.mul(regs[i], regs[i+1])
+    for i in range(start, start+length -1): regs[i] = regs.mul(regs[i], regs[i+1])
 
 def emit_crtrig_shift(regs: Registers, start, length):
     t = length//2 

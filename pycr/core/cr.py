@@ -225,8 +225,26 @@ class CREconnector(CRE):
 
     # fix for printing
     def valueof(self):
-        if self.index == -1: return self.operands[0].valueof()
+        
+        if self.index == -1:
+            print(type(self.original), type(self[0]))
+            return self._access(self.original, self[0])
+        
         else: return self.operands[0][self.index].valueof()
+
+    def _access(self, original, overlay):
+        if isinstance(original, (CRsum, CRprod, CRsin)): return overlay[0].valueof()
+        elif isinstance(original, CRcos): return overlay[len(overlay)//2].valueof()
+        elif isinstance(original, CRtan): return overlay[0].valueof() / overlay[len(overlay)//2].valueof()
+        elif isinstance(original, CRcot): return overlay[len(overlay)//2].valueof() / overlay[0].valueof()
+        elif isinstance(original, CREadd): return overlay[0].valueof() + overlay[1].valueof()
+        elif isinstance(original, CREmul): return overlay[0].valueof() * overlay[1].valueof()
+        elif isinstance(original, CREpow): return overlay[0].valueof()** overlay[1].valueof()
+        elif isinstance(original, CRElog): return log(overlay[0].valueof(), overlay[1].valueof())
+        elif isinstance(original, CREsin): return sin(overlay[0].valueof())
+        elif isinstance(original, CREcos): return cos(overlay[0].valueof())
+        elif isinstance(original, CREtan): return tan(overlay[0].valueof())
+        elif isinstance(original, CREcot): return cot(overlay[0].valueof())
     
     def crhash(self):
         if not hasattr(self.operands[0], "suffix_hashes"): self.operands[0].suffix_hashes = self.operands[0]._suffixhash()

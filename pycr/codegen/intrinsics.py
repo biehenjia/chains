@@ -18,8 +18,14 @@ v4f64 = ir.VectorType(f64, 4)
 
 def vec(scalar_type: ir.Type, width: int) -> ir.VectorType: return ir.VectorType(scalar_type, width)
 
-def call_intrinsic(builder: ir.IRBuilder, name: str, reg_type: ir.Type, args: list) -> ir.Value:
-    fn = builder.module.declare_intrinsic(name, [reg_type])
+def call_intrinsic(builder, name, reg_type, args):
+    module = builder.module
+    if isinstance(reg_type, ir.VectorType):
+        mangled = f"{name}.v{reg_type.count}{reg_type.element.intrinsic_name}"
+    else:
+        mangled = f"{name}.{reg_type.intrinsic_name}"
+    fnty = ir.FunctionType(reg_type, [reg_type] * len(args))
+    fn = module.globals.get(mangled) or ir.Function(module, fnty, name=mangled)
     return builder.call(fn, args)
 
 def call_libfn(builder: ir.IRBuilder, name: str, reg_type: ir.Type, args: list) -> ir.Value:

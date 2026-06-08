@@ -3,6 +3,7 @@ from .dispatch import *
 from .generators import *
 from .scheduler import *
 from .subexpressions import *
+from .parallel import dispatch_parallel
 
 def generate_scalar(cr: CR, dtype = numpy.float32, seeding=None, name="penguin"):
     env = initialize_env(cr) # AGNOSTIC
@@ -30,23 +31,39 @@ def generate_scalar(cr: CR, dtype = numpy.float32, seeding=None, name="penguin")
     f = compile_fn(module, name, n_dims) # AGNOSTIC
     return f, tape_np 
 
-def prepare_function(cr: CR, dtype = numpy.float32, policy = LanePolicy, name = "function"):
+def prepare_function(cr: CR, dtype = numpy.float32, policy = LanePolicy, name = "function", parallel = False):
     env = initialize_env(cr)
+    prepare_cse(env, cr)
+    cr = cse(env, {}, cr)
+    env = initialize_env(cr)
+
     symbols = extract_symbols(cr)
+
     module = ir.Module(name="kernel")
     n_dims = len(symbols)
-    temp_res = numpy.zeros(list(1 for i in range(n_dims)))
+    temp_res = numpy.zeros(list(1 for i in range(n_dims)), dtype= dtype)
     tape = construct_tape(env, cr)
+
+
     if isinstance(policy, VectorPolicy):
-        outer_symbol = max(symbols, key = str)
-        tape = vectorize_tape(tape, f"{outer_symbol.name}_0",f"{outer_symbol}_h", policy.W)
+        inner_symbol = max(symbols, key = str)
+        tape = vectorize_tape(tape, sympy.Symbol(f"{inner_symbol.name}_0"),sympy.Symbol(f"{inner_symbol}_h"), policy.W)
         tape_np = numpy.zeros((len(tape), policy.W), dtype=dtype)
     else:
         tape_np = numpy.zeros(len(tape), dtype = dtype)
     
+    xtape = prepare_tape(tape,{"x_0":0, "x_h":1, "y_0":0, "y_h":1})
+    for x in env:
+        if isinstance(x, CRnum):
+            continue
+        cfg = env[x]
+        print(x)
+        print(xtape[cfg.tape_start:cfg.tape_start+len(x)])
+
     ftype = emit_signature(temp_res, tape_np)
     func, builder = emit_entry_block(module, ftype, name)
     regs = Registers(builder, policy, len(tape))
+    print(len(tape))
     regs.bind(func, n_dims)
     regs.prologue(len(tape))
     traces_byorder = partition_orders(env, cr)
@@ -60,11 +77,28 @@ def prepare_tape(tape: list[sympy.Expr] | list[list[sympy.Expr]], mapping: dict[
         # vectorized
         pretape = []
         for entry in tape:
-            to_np = numpy.list(entry.subs(mapping), dtype=dtype)
-            pretape.append(to_np)
+            temp = [v.subs(mapping) for v in entry]
+            pretape.append(numpy.array(temp, dtype=dtype))
     else:
-        pretape = [[v.subs(mapping) for v in tape]]
+        pretape = [v.subs(mapping) for v in tape]
+        
     return numpy.array(pretape,dtype = dtype)
+    
+def prepare_parallel(cr, tape, bounds,mapping,dtype,  N):
+    lowest_variable = min(extract_symbols(cr), key=str)
+    symbol_0, symbol_h = f"{lowest_variable.name}_0", f"{lowest_variable.name}_h"
+    outer_bound = bounds[0]
+    
+    tapes = []
+    offset = 0
 
+    mapping = mapping.copy()
+    x0 = mapping[symbol_0]
+    xh = mapping[symbol_h]
+    for i in range(N):
+        mapping[symbol_0] = x0 + i * (outer_bound//N)*xh
+        tapes.append(prepare_tape(tape, mapping, dtype))
+        # print(tapes[-1])
+    return numpy.array(tapes, dtype = dtype)
 
-
+        

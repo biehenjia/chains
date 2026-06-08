@@ -35,16 +35,13 @@ def jit(llvm_mod: llvm.ModuleRef, tm: llvm.TargetMachine, func_name, n_dims):
 
     def call(result_arr, tape_arr):
         bounds = [ctypes.c_int64(result_arr.shape[i]) for i in range(n_dims)]
-        cfunc(
-            result_arr.ctypes.data_as(ctypes.c_void_p),
-            tape_arr.ctypes.data_as(ctypes.c_void_p),
-            *bounds
-        )
+        cfunc( result_arr.ctypes.data_as(ctypes.c_void_p), tape_arr.ctypes.data_as(ctypes.c_void_p), *bounds )
     
     call._engine = engine
+    call._cfunc = cfunc 
     return call
 
-def set_pto(speed = 3, vectorize = False) -> llvm.PipelineTuningOptions:
+def set_pto(speed = 3, vectorize = True) -> llvm.PipelineTuningOptions:
     pto = llvm.create_pipeline_tuning_options(speed)
     pto.loop_interleaving = True
     pto.loop_unrolling = True
@@ -53,12 +50,13 @@ def set_pto(speed = 3, vectorize = False) -> llvm.PipelineTuningOptions:
     return pto
 
 def compile_fn(module, func_name, n_dims, cpu=None, features="", pto=None):
-    print(str(module))
+    #print(str(module))
     cpu = cpu or llvm.get_host_cpu_name()
-    tm  = llvm.Target.from_default_triple().create_target_machine(cpu=cpu, features=features)
+    tm  = llvm.Target.from_default_triple().create_target_machine(cpu=cpu, features=features, opt=3)
+    pto = pto or set_pto(speed=3, vectorize=True)
     llvm_mod = make_module(module, tm)
     optimize(llvm_mod, tm, pto)
-    print(str(llvm_mod))
+    #print(str(llvm_mod))
     #print(llvm_mod.get_function(func_name)) 
     return jit(llvm_mod, tm, func_name, n_dims)
 
