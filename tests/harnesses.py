@@ -59,11 +59,11 @@ def test_cr_vector_parallel(s, length, records, trials=10, width =4, threads = 4
     dims = len(symbols)
     f, tape = pycr.produce_pair(s, dtype, width)
     mapping = {f"{v.name}_0":0 for v in symbols} | {f"{v.name}_h":1 for v in symbols}
-    tapes = pycr.prepare_parallel(lowest, tape, list(length for i in range(dims)), mapping)
+    tapes = pycr.prepare_parallel(lowest, tape, list(length for i in range(dims)), mapping,dtype,threads)
     results = numpy.zeros(list(length + dims - (length % dims) for _ in range(dims)), dtype = dtype )
     for i in range(trials):
         start = time.perf_counter()
-        pycr.dispatch_parallel(f, results, tapes, list(length + dims - (length % dims) for _ in dims), dtype = dtype)
+        pycr.dispatch_parallel(f, results, tapes, list(length + dims - (length % dims) for _ in range(dims)))
         end = time.perf_counter()
         records.append(end - start)
     slc = tuple(slice(None, length) for i in range(dims))
