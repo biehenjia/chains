@@ -227,7 +227,7 @@ class CREconnector(CRE):
     def valueof(self):
         
         if self.index == -1:
-            print(type(self.original), type(self[0]))
+            #print(type(self.original), type(self[0]))
             return self._access(self.original, self[0])
         
         else: return self.operands[0][self.index].valueof()

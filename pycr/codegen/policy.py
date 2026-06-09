@@ -18,11 +18,15 @@ class ScalarPolicy(LanePolicy):
     def store(self, builder, out_ptr, idx, val): builder.store(val, builder.gep(out_ptr, [idx]))
 
 class VectorPolicy(LanePolicy):
-    def store(self, builder, out_ptr, idx, val):
-        stamp = builder.sdiv(idx, ir.Constant(ir.IntType(64), self.W))
-        vptr  = builder.bitcast(out_ptr, ir.PointerType(self.slot_type))
-        builder.store(val, builder.gep(vptr, [stamp]))
+    # def store(self, builder, out_ptr, idx, val):
+    #     stamp = builder.sdiv(idx, ir.Constant(ir.IntType(64), self.W))
+    #     vptr  = builder.bitcast(out_ptr, ir.PointerType(self.slot_type))
+    #     builder.store(val, builder.gep(vptr, [stamp]))
 
+    def store(self, builder, out_ptr, idx, val):
+        addr = builder.gep(out_ptr, [idx])
+        vptr = builder.bitcast(addr, ir.PointerType(self.slot_type))
+        builder.store(val, vptr, align=4)
     def emit_tail(self, builder, out_ptr, val, idx, B):
         W = ir.Constant(ir.IntType(64), self.W)
         zero = ir.Constant(ir.IntType(64), 0)

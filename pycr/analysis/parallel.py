@@ -13,24 +13,32 @@ def get_pool(n):
         _pool = ThreadPoolExecutor(max_workers=n)
     return _pool
 
-def dispatch_parallel(call, result: numpy.ndarray, tape_batch: numpy.ndarray, bounds: list[int]):
+def dispatch_parallel(call, result, tape_batch, bounds):
     cfunc = call._cfunc
     N = tape_batch.shape[0]
     outer = bounds[0]
-    inner = result.size// outer
-    itemsize = result.itemsize
-    chunk = outer// N
-    counts = [chunk] * N
-    counts[-1] += outer% N
-    starts = [sum(counts[:i]) for i in range(N)]
+    inner = result.size // outer
+    result_stride = inner * result.itemsize
+    tape_stride = tape_batch.strides[0]
+    result_base = result.ctypes.data
+    tape_base = tape_batch.ctypes.data
+    inner_bounds = tuple(bounds[1:])
 
-    inner_bounds = [ctypes.c_int64(b) for b in bounds[1:]]
+    chunk, rem = divmod(outer, N)
+    args = []
+    offset = 0
+    for i in range(N):
+        cnt = chunk + (1 if i < rem else 0)
+        args.append((
+            result_base + offset * result_stride,
+            tape_base + i * tape_stride,
+            cnt,
+            *inner_bounds,
+        ))
+        offset += cnt
 
-    def run(i):
-        r = ctypes.c_void_p(result.ctypes.data + starts[i] * inner * itemsize)
-        t = ctypes.c_void_p(tape_batch[i].ctypes.data )
-        cfunc(r,t, ctypes.c_int64(counts[i]), *inner_bounds)
     pool = get_pool(N)
-    futures = [pool.submit(run,i) for i in range(N)]
+    futures = [pool.submit(cfunc, *args[i]) for i in range(N - 1)]
+    cfunc(*args[-1])
     for f in futures:
         f.result()

@@ -34,7 +34,7 @@ def dispatch_access(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
         if not isinstance(cr.original, CRtrig) or cr.index != -1:
             return dispatch_access(regs, sub_cfg, env)
         else:
-            print("original:", cr.original)
+            #print("original:", cr.original)
             # proof sketch/convince yourself: CREconnector will not recurse
             # NTS: working on the consed subtree tape, but sticking the original access type
             return table[type(cr.original)](regs, sub_start, len(sub_cr))

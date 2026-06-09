@@ -11,8 +11,8 @@ def generate_nested(regs, traces_byorder, env, policy):
 
     latches.append(begin_loop(regs, regs.bounds[dimensions - 1], policy.W))
     generate_loop(regs, traces_byorder[-1], env, final=True)
-    regs[-1] = dispatch_access(regs,env[traces_byorder[-1][-1]],env)
-    policy.emit_tail(regs.builder, regs.result, regs[-1], latches[-1].idx, regs.bounds[dimensions - 1])
+    # regs[-1] = dispatch_access(regs,env[traces_byorder[-1][-1]],env)
+    # policy.emit_tail(regs.builder, regs.result, regs[-1], latches[-1].idx, regs.bounds[dimensions - 1])
     end_loop(regs, latches.pop())
 
     for i in range(dimensions-1):

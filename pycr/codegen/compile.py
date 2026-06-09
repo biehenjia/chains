@@ -56,7 +56,7 @@ def compile_fn(module, func_name, n_dims, cpu=None, features="", pto=None):
     pto = pto or set_pto(speed=3, vectorize=True)
     llvm_mod = make_module(module, tm)
     optimize(llvm_mod, tm, pto)
-    #print(str(llvm_mod))
+    print(str(llvm_mod))
     #print(llvm_mod.get_function(func_name)) 
     return jit(llvm_mod, tm, func_name, n_dims)
 

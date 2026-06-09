@@ -36,7 +36,7 @@ def prepare_function(cr: CR, dtype = numpy.float32, policy = LanePolicy, name = 
     prepare_cse(env, cr)
     cr = cse(env, {}, cr)
     env = initialize_env(cr)
-
+    print(cr)
     symbols = extract_symbols(cr)
 
     module = ir.Module(name="kernel")
@@ -57,8 +57,8 @@ def prepare_function(cr: CR, dtype = numpy.float32, policy = LanePolicy, name = 
         if isinstance(x, CRnum):
             continue
         cfg = env[x]
-        print(x)
-        print(xtape[cfg.tape_start:cfg.tape_start+len(x)])
+        #print(x)
+        #print(xtape[cfg.tape_start:cfg.tape_start+len(x)])
 
     ftype = emit_signature(temp_res, tape_np)
     func, builder = emit_entry_block(module, ftype, name)
