@@ -1,26 +1,19 @@
 from llvmlite import ir
-from .registers import *
+from .registers import Registers
+from .intrinsics import i64
+from .._dtype import numpy_to_ir
 import sympy, functools, numpy
 
 
-DTYPE_TO_IR: dict[numpy.dtype, ir.Type] = {
-    numpy.dtype("float32"): ir.FloatType(),
-    numpy.dtype("float64"): ir.DoubleType(),
-    numpy.dtype("int32"):   ir.IntType(32),
-    numpy.dtype("int64"):   ir.IntType(64),
-}
-
 def _element_type(arr: numpy.ndarray) -> ir.Type:
-    base = DTYPE_TO_IR[arr.dtype]
-    if arr.ndim == 2:
-        return ir.VectorType(base, arr.shape[1])
-    return base
+    width = arr.shape[1] if arr.ndim == 2 else 1
+    return numpy_to_ir(arr.dtype, width)
 
 def emit_signature(result, tape):
-    base = DTYPE_TO_IR[result.dtype]
+    base = numpy_to_ir(result.dtype)
     params = [
         ir.PointerType(base),
-        ir.PointerType(_element_type(tape)), 
+        ir.PointerType(_element_type(tape)),
         *([i64] * result.ndim)
     ]
     return ir.FunctionType(ir.VoidType(), params)

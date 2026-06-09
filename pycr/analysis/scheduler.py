@@ -1,6 +1,6 @@
-from ..core import *
-from .crconfig import CRconfig
-import sympy, hashlib, dataclasses
+from ..core import CR, CRnum, CREconnector
+from ..crconfig import CRconfig
+import sympy
 
 def construct_tape(env: dict[CR, CRconfig], root: CR ) -> list[sympy.Expr]:
     tape = []
@@ -46,8 +46,6 @@ def partition_orders(env: dict[CR, CRconfig], root: CR):
         symbol_name = symbol.name
         ordering[symbol_name] = i
     
-    
-
     seen = set()
     for cr in root.postorder():
         if not isinstance(cr, CRnum):

@@ -1,3 +1,11 @@
+__all__ = [
+    "Algebra",
+    "ADD", "MUL", "POW", "DIV",
+    "SIN", "COS", "TAN", "COT",
+    "EXP", "LOG",
+]
+# CRalgebra is shadowed by core/cr.py's instance, which is the one rule
+# modules register against. The unused instances below stay for the moment.
 
 # TODO: use sympy opType
 ADD = 'ADD'

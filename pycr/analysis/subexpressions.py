@@ -1,5 +1,5 @@
-from .crconfig import CRconfig
-from ..core import *
+from ..crconfig import CRconfig
+from ..core import CR, CRnum, CRtrig, CREconnector
 import hashlib, sympy
 
 def prepare_cse(env: dict[CR, CRconfig], root: CR):

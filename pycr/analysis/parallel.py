@@ -17,6 +17,10 @@ def dispatch_parallel(call, result, tape_batch, bounds):
     cfunc = call._cfunc
     N = tape_batch.shape[0]
     outer = bounds[0]
+    assert outer % N == 0, (
+        f"dispatch_parallel requires outer bound ({outer}) divisible by N ({N}); "
+        "chunk assignment will overlap or skip otherwise."
+    )
     inner = result.size // outer
     result_stride = inner * result.itemsize
     tape_stride = tape_batch.strides[0]

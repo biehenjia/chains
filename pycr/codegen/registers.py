@@ -1,6 +1,6 @@
 from llvmlite import ir
-from .intrinsics import *
-from .policy import *
+from .intrinsics import Math, i64
+from .policy import LanePolicy
 
 class Registers(Math):
     def __init__(self, builder, policy, n):

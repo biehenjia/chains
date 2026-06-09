@@ -1,6 +1,7 @@
 from llvmlite import ir
 from typing import NamedTuple
-from .registers import *
+from .registers import Registers
+from .intrinsics import i64
 
 class LoopHandle(NamedTuple):
     idx: ir.PhiInstr

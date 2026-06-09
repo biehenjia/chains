@@ -1,7 +1,7 @@
 # vector/scalar agnostic
 
 from llvmlite import ir
-from .registers import *
+from .registers import Registers
 
 def emit_sum_shift(regs:Registers, start, length):
     for i in range(start, start+length -1): regs[i] = regs.add(regs[i], regs[i+1])

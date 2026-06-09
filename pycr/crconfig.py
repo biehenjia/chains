@@ -1,5 +1,5 @@
 import dataclasses, sympy
-from ..core import *
+from .core import CR, CRnum
 
 @dataclasses.dataclass
 class CRconfig:
@@ -11,8 +11,8 @@ class CRconfig:
     # represents if hoisting is required
     least_variable: sympy.Symbol = sympy.Symbol('')
 
-def initialize_env(root: CR)  :
-    env: dict[CR, CRconfig]= {}
+def initialize_env(root: CR):
+    env: dict[CR, CRconfig] = {}
 
     for cr in root.postorder():
         env[cr] = CRconfig(cr)

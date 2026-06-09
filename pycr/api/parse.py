@@ -1,5 +1,4 @@
 import sympy
-from ..core import *
 from .crmake import crmake
 
 def parse(expr_string):

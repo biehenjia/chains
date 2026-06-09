@@ -1,5 +1,5 @@
 from llvmlite import ir
-from .registers import *
+from .registers import Registers
 
 # accessing patterns; abstracted
 

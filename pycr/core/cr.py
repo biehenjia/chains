@@ -1,7 +1,18 @@
 from __future__ import annotations
 import sympy, hashlib, struct
-from .algebra import *
+from .algebra import Algebra, ADD, MUL, POW, SIN, COS, TAN, COT, LOG
 from operator import add, mul, pow
+
+__all__ = [
+    "CR", "CRnum", "CRsum", "CRprod",
+    "CRtrig", "CRsin", "CRcos", "CRtan", "CRcot",
+    "CRE", "CREadd", "CREmul", "CREpow", "CRElog",
+    "CREsin", "CREcos", "CREtan", "CREcot", "CREconnector",
+    "sin", "cos", "tan", "cot", "log",
+    "CRalgebra",
+    "ADD", "MUL", "POW", "SIN", "COS", "TAN", "COT", "LOG",
+]
+
 CRalgebra = Algebra()
 
 class CR:

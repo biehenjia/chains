@@ -1,3 +1,4 @@
+import sympy
 from .cr import *
 
 '''

@@ -1,5 +1,5 @@
-from ..core import *
 import sympy
+from ..core import CRnum, CRsum, sin, cos, tan, cot, log
 
 def crmake(node, symbol_table):
     if isinstance(node, sympy.Number): res = CRnum(node)
