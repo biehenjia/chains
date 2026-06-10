@@ -3,4 +3,4 @@ sympy
 
 numpy
 uv-build
-numba 
+llvmlite

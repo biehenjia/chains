@@ -1,28 +1,37 @@
-# TODO:
-- numeric instanced CSE is not working; default to symbolic mode for trig cases
-
-
-# chains
-chains of recurrences engine in python
-
 # installation
 
-## pip
-```bash
+```
 pip install git+https://github.com/biehenjia/chains
 ```
 
-## manual
-```bash
-git clone https://github.com/biehenjia/chains
+# dependencies
+
+```
+1. numpy
+2. sympy
+3. llvmlite
 ```
 
-# examples
+# getting started
+
+constructing a function from a string
 ```python
-from pycr import chainify
+import pycr
+import numpy
 
-cr, symbol_table = chainify("x**2+sin(x)+4")
+fn = pycr.compile("x**2", dtype = numpy.float32, width = 4, threads = 4)
+bound = fn.bind(x=(0,1,100))
+bound()
+out = bound.result
+```
+constructing a function from a CR
 
-print(cr)
-print(symbol_table)
+
+```python
+import pycr
+import numpy
+
+cr = pycr.parse("x")
+cr2 = cr 
+cr2_1 = cr2 + cr + 1
 ```
