@@ -34,6 +34,3 @@ def end_loop(regs: Registers, handle: LoopHandle) -> None:
     builder.position_at_end(handle.exit)
     regs.indices.pop()
 
-
-
-
