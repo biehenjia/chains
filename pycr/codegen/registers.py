@@ -3,6 +3,7 @@ from .intrinsics import Math, i64
 from .policy import LanePolicy
 
 class Registers(Math):
+
     def __init__(self, builder, policy, n):
         self.builder: ir.IRBuilder = builder
         self.policy: LanePolicy  = policy
@@ -12,7 +13,7 @@ class Registers(Math):
         self.result: ir.Value | None = None
         self.indices = []
         Math.__init__(self, builder, self.rtype)
-
+    # Regsiters[i] = ... 
     def __getitem__(self, i): return self.builder.load(self.slots[i])
     def __setitem__(self, i, v): self.builder.store(v, self.slots[i])
     def __len__(self): return len(self.slots)

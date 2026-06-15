@@ -16,19 +16,36 @@ __all__ = [
 CRalgebra = Algebra()
 
 class CR:
+
     operands: list["CR"]
     variable: sympy.Symbol
     expr: sympy.Expr
 
     def __init__(self, operands: list["CR"], variable: sympy.Symbol): 
+        '''
+        Initializes a CR
+        
+        :param operands: list of CR children operands
+        :type operands: list["CR"]
+        :param variable: the highest sympy symbol associated with this CR
+        :type variable: sympy.Symbol
+        '''
         self.operands = operands
         self.variable = variable
-    def __len__(self): return len(self.operands) 
-    def __getitem__(self, key)-> CR: return self.operands[key]
-    def valueof(self): return self[0].valueof()
+
+    def __len__(self): 
+        return len(self.operands) 
+    
+    def __getitem__(self, key)-> CR: 
+        return self.operands[key]
+    
+    def valueof(self): 
+        return self[0].valueof()
+    
     def postorder(self):
         for operand in self.operands: yield from operand.postorder()
         yield self
+
     def copy(self) -> CR:
         new_operands = [self[i].copy() for i in range(len(self))]
         res = type(self)(new_operands, self.variable)
@@ -37,60 +54,79 @@ class CR:
     
 
     def __add__(self,target: CR) -> CR:
+        """
+        Dunder dispatch function for adding two CRs to be routed through CRalgebra. 
+        Reorders to canonically add the lexicographically lesser CR treated as a constant into the higher one. 
+        
+        :param self: first operand in the addition argument
+        :param target: second operand in addition argument
+        :type target: CR
+        :rtype: CR
+        """
         if self.variable.name > target.variable.name: key = (type(self), CRnum)
         elif self.variable.name < target.variable.name: key = (CRnum, type(target))
         else: key = (type(self), type(target))
-        # newexpr = self.expr + target.expr
         res = CRalgebra.apply(ADD, self, target , key=key)
-        # res.expr = newexpr 
         return res
+    
     def __mul__(self, target: CR) -> CR:
+        """
+        Dunder dispatch function for multiplying two CRs to be routed through CRalgebra.
+        Reorders to canonically multiply the lexicographically lesser CR treated as a constant into the higher one. 
+
+        :param self: first operand in the multiplication argument
+        :param target: second operand in multiplication argument
+        :type target: CR
+        :rtype: CR
+        """
         if self.variable.name > target.variable.name: key = (type(self), CRnum)
         elif self.variable.name < target.variable.name: key = (CRnum, type(target))
         else: key = (type(self), type(target))
-        # newexpr = self.expr * target.expr
         res = CRalgebra.apply(MUL, self, target , key=key)
-        # res.expr = newexpr
         return res
+    
     def __pow__(self, target: CR) -> CR:
+        """
+        Dunder dispatch function for exponentiating two CRs to be routed through CRalgebra.
+        Does not reassociate CRs by ordering during exponentiation. 
+
+        :param self: first operand in the exponentiation argument
+        :param target: second operand in exponentiation argument
+        :type target: CR
+        :rtype: CR
+        """
         key = (type(self),type(target))
         res =  CRalgebra.apply(POW, self, target, key=key)
-        # newexpr =  self.expr ** target.expr
-        # res.expr = newexpr
         return res 
+    
     def sin(self) -> CR: 
         res = CRalgebra.apply(SIN, self, key=type(self))
-        # newexpr = sympy.sin(self.expr)
-        # res.expr = newexpr
         return res
+    
     def cos(self)-> CR : 
         res = CRalgebra.apply(COS, self, key=type(self))
-        # newexpr = sympy.cos(self.expr)
-        # res.expr = newexpr
         return res 
+    
     def tan(self)-> CR: 
         res = CRalgebra.apply(TAN, self, key=type(self))
-        # newexpr = sympy.tan(self.expr)
-        # res.expr = newexpr
         return res
+    
     def cot(self)-> CR: 
         res =  CRalgebra.apply(COT, self, key=type(self))
-        # newexpr = sympy.cot(self.expr)
-        # res.expr = newexpr
         return res
+    
     def log(self, target=None):
         if target is None:
             target = CRnum(sympy.E)
-            # newexpr = sympy.log(self.expr)
-        # else: newexpr = sympy.log(target.expr, self.expr)
         key = (type(self), type(target))
         res = CRalgebra.apply(LOG, self, target, key=key)
-        # res.expr = newexpr
         return res
+    
     def __str__(self):
         layers = [f"{self.__class__.__name__}({self.variable})"]
         for i,node in enumerate(self): layers.extend(node.walk_str("",i== len(self)-1))
         return "\n".join(layers)
+    
     def walk_str(self,prefix="", terminal=True):
         pipe = "└─ " if terminal else "├─ "
         layer = f"{prefix}{pipe}{self.__class__.__name__}({self.valueof(),self.variable})"
@@ -98,7 +134,12 @@ class CR:
         prefix_c = f"{prefix}{'   ' if terminal else '|  '} "
         for i,node in enumerate(self): layers.extend(node.walk_str(prefix_c,i == len(self)-1 ))
         return layers
+    
     def _suffixhash(self):
+        '''
+        Generates a list of hashed bytes in suffix order for the CRsum, CRprod and CRE types,
+        i.e., suffix_hashes[0] is the suffix containing every prefix.       
+        '''
         # works for both CRsum and CRprod types
         # need to account for the same order
         # should also just work with the CRE types
@@ -112,7 +153,11 @@ class CR:
             suffix_hashes[-i-1] = h.digest()
             prev = suffix_hashes[-i-1]
         return suffix_hashes
+    
     def crhash(self):
+        '''
+        Retrieves the correct hash for the CRsum, CRprod and CRE types.
+        '''
         if not hasattr(self, "suffix_hashes"): self.suffix_hashes = self._suffixhash()
         return self.suffix_hashes[0]
 
@@ -123,17 +168,41 @@ class CRnum(CR):
         else: self.value = value
         self.variable = sympy.Symbol('')
         # self.expr = self.value
-    def postorder(self): yield self
-    def valueof(self): return self.value
-    def simplify(self): return self
-    def copy(self): return CRnum(self.valueof())
-    def is_integer(self): return self.valueof().is_Integer
-    def is_zero(self): return self.valueof().is_zero
-    def is_one(self): return (self.valueof() -1).is_zero
-    def walk_str(self, prefix="", terminal=True): return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
-    def __str__(self): return f"CRnum({self.value})"
-    def shift(self): return
+    
+    def postorder(self): 
+        yield self
+
+    def valueof(self): 
+        return self.value
+    
+    def simplify(self): 
+        return self
+    
+    def copy(self): 
+        return CRnum(self.valueof())
+    
+    def is_integer(self): 
+        return self.valueof().is_Integer
+    
+    def is_zero(self): 
+        return self.valueof().is_zero
+    
+    def is_one(self): 
+        return (self.valueof() -1).is_zero
+    
+    def walk_str(self, prefix="", terminal=True): 
+        return [f"{prefix}{'└─ ' if terminal else '├─ '}CRnum({self.value})"]
+    
+    def __str__(self): 
+        return f"CRnum({self.value})"
+    
+    def shift(self): 
+        return
+    
     def _suffixhash(self):
+        """        
+        :param self: Description
+        """
         h = hashlib.blake2b()
         h.update(b"CRnum")
         h.update(sympy.srepr(self.value).encode())
