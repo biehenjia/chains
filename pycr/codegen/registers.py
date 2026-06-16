@@ -3,7 +3,11 @@ from .intrinsics import Math, i64
 from .policy import LanePolicy
 
 class Registers(Math):
-
+    """
+    Registers object abstraction, contains reference to working IRbuilder. 
+    Register slots are allocated as registers via mem2reg during the optimization pass.
+    Provides LDR and STR shorthands. 
+    """
     def __init__(self, builder, policy, n):
         self.builder: ir.IRBuilder = builder
         self.policy: LanePolicy  = policy
@@ -14,17 +18,28 @@ class Registers(Math):
         self.indices = []
         Math.__init__(self, builder, self.rtype)
     # Regsiters[i] = ... 
-    def __getitem__(self, i): return self.builder.load(self.slots[i])
-    def __setitem__(self, i, v): self.builder.store(v, self.slots[i])
-    def __len__(self): return len(self.slots)
+    def __getitem__(self, i): 
+        return self.builder.load(self.slots[i])
+    
+    def __setitem__(self, i, v): 
+        self.builder.store(v, self.slots[i])
+
+    def __len__(self): 
+        return len(self.slots)
 
     def bind(self, func, n_dims):
+        """
+        Binds the bounds of the function before lowering/compilation stage
+        """
         self.result = func.args[0]
         self.bounds = list(func.args[2:2 + n_dims])
         self.tape = func.args[1]
         self.resultv = self.builder.bitcast(self.result, ir.PointerType(self.rtype))
 
     def prologue(self, n: int):
+        """
+        Loads function arguments
+        """
         self.constants = []
         for i in range(n):
             v = self.builder.load(self.builder.gep(self.tape, [ir.Constant(i64, i)]))

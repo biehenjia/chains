@@ -16,7 +16,7 @@ from .parse import parse
 class Bound:
     """A Kernel bound to a specific grid: holds the seeded tape and result buffer.
 
-    Calling a Bound dispatches the kernel — no tape evaluation, no allocation.
+    Calling a Bound dispatches the kernel — no tape evaluation or allocation.
     Use this when benchmarking throughput or running the same grid repeatedly.
     """
     kernel: "Kernel"
@@ -71,22 +71,17 @@ class Kernel:
     def __call__(self, **grids) -> np.ndarray:
         return self.bind(**grids)()
 
-    # --- internals ---
 
     def _validate_grids(self, grids: dict) -> tuple[dict[str, float], list[int]]:
         names = self.symbol_names
         if set(grids) != set(names):
-            raise TypeError(
-                f"Kernel expected grid kwargs {sorted(names)}, got {sorted(grids)}"
-            )
+            raise TypeError(f"Kernel expected grid kwargs {sorted(names)}, got {sorted(grids)}")
         mapping: dict[str, float] = {}
         lengths: list[int] = []
         for name in names:
             spec = grids[name]
             if not (isinstance(spec, tuple) and len(spec) == 3):
-                raise TypeError(
-                    f"grid for {name!r} must be a (start, step, length) tuple, got {spec!r}"
-                )
+                raise TypeError(f"grid for {name!r} must be a (start, step, length) tuple, got {spec!r}")
             start, step, length = spec
             if int(length) < 1:
                 raise ValueError(f"grid length for {name!r} must be >= 1, got {length}")
@@ -123,15 +118,8 @@ class Kernel:
         return np.stack(tapes, axis=0)
 
 
-def compile(
-    expr: Union[str, CR],
-    *,
-    dtype=np.float32,
-    width: int = 1,
-    threads: int = 1,
-    name: str = "kernel",
-    debug: bool = False,
-) -> Kernel:
+def compile( expr: Union[str, CR], *, dtype=np.float32, width: int = 1, threads: int = 1, name: str = "kernel", debug: bool = False ) -> Kernel:
+    
     if isinstance(expr, str):
         cr = parse(expr)
     else:
@@ -141,7 +129,6 @@ def compile(
     module = emit(program, dtype, name)
     cfunc = compile_fn_debug(module, name, program.n_dims) if debug else compile_fn(module, name, program.n_dims)
 
-    # Force lambdify now so the first user call doesn't pay for it.
     _ = program._tape_ufunc
 
     return Kernel(

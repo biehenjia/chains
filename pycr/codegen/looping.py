@@ -10,6 +10,14 @@ class LoopHandle(NamedTuple):
     stride: int
 
 def begin_loop(regs: Registers, n: ir.Value, stride: int = 1) -> LoopHandle:
+    """
+    Constructs a loop given a registers object and returns the exit latch.
+
+    :type regs: Registers
+    :type n: ir.Value
+    :type stride: int
+    :rtype: LoopHandle
+    """
     builder = regs.builder
     fn = builder.function
     pre = builder.block
@@ -26,6 +34,12 @@ def begin_loop(regs: Registers, n: ir.Value, stride: int = 1) -> LoopHandle:
     return LoopHandle(idx, h, x, stride)
 
 def end_loop(regs: Registers, handle: LoopHandle) -> None:
+    """
+    Closes the loop at a given LoopHandle latch.
+    
+    :type regs: Registers
+    :type handle: LoopHandle
+    """
     builder = regs.builder
     latch = builder.block
     nxt = builder.add(handle.idx, ir.Constant(i64, handle.stride))

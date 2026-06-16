@@ -3,6 +3,13 @@ from ..crconfig import CRconfig
 import sympy
 
 def construct_tape(env: dict[CR, CRconfig], root: CR ) -> list[sympy.Expr]:
+    """
+    Constructs a list of SymPy expression objects in the argument order for a CRfunction
+    
+    :type env: dict[CR, CRconfig]
+    :type root: CR
+    :rtype: list[Expr]
+    """
     tape = []
     # every node has potentially some children
     seen = set()

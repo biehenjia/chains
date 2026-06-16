@@ -8,6 +8,13 @@ from .subexpressions import prepare_cse, cse
 
 
 def lower(cr: CR, width: int = 1) -> Program:
+    """
+    Lowers the CR to a program level.
+
+    :type cr: CR
+    :type width: int
+    :rtype: Program
+    """
     env = initialize_env(cr)
     prepare_cse(env, cr)
     cr = cse(env, {}, cr)
