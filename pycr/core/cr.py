@@ -297,6 +297,9 @@ class CREcot(CRE):
 
 # shouldn't even have a source. It will be a child node of a CRobject
 class CREconnector(CRE):
+    """
+    CR for propogation and CSE purposes
+    """
     def __init__(self, source: CR, index = -1):
         self.operands = [source]
         self.index = index

@@ -3,17 +3,43 @@ from ..core import CR, CRnum, CRtrig, CREconnector
 import hashlib, sympy
 
 def prepare_cse(env: dict[CR, CRconfig], root: CR):
+    """
+    Attaches the suffix hashes to their keyed entries within the CR environment in postorder.
+
+    :param env: the CRenvironment
+    :type env: dict[CR, CRconfig]
+    :param root: the root of the CR
+    :type root: CR
+    """
     for cr in root.postorder():
         if isinstance(cr, CRnum): _suffix_hash_crnum(env, cr )
         elif isinstance(cr, CRtrig): _suffix_hash_crtrig(env, cr)
         else: _suffix_hash_default(env, cr)
 
-def cse(env, table: dict[bytes, CR], cr:CR):
+def cse(env: dict[CR, CRconfig], table: dict[bytes, CR], cr:CR):
+    """
+    Performs common subexpression elimination of CRs
+    
+    :param env: the CRenvironment
+    :type env: dict[CR, CRconfig]
+    :param table: the cons table
+    :type table: dict[bytes, CR]
+    :param cr: the root of the CR
+    :type cr: CR
+    """
     if isinstance(cr, CRnum): return cr
     cr.operands = [cse(env, table, operand) for operand in cr]
     return intern_full(env, cr, table)
 
 def _suffix_hash_default(env: dict[CR, CRconfig], cr: CR):
+    """
+    Performs the default suffix hash for CRsum, CRprod, and CREs
+    
+    :param env: the CRenvironment
+    :type env: dict[CR, CRconfig]
+    :param cr: the root of the CR
+    :type cr: CR
+    """
     if env[cr].suffix_hashes: return
     prev = f"{type(cr)}({cr.variable})".encode()
     suffix_hashes = [None for i in range(len(cr))]
@@ -26,6 +52,14 @@ def _suffix_hash_default(env: dict[CR, CRconfig], cr: CR):
     env[cr].suffix_hashes = suffix_hashes
 
 def _suffix_hash_crnum(env: dict[CR, CRconfig], cr: CRnum):
+    """
+    Performs the suffix hash for CRnum leaf nodes.
+    
+    :param env: the CRenvironment
+    :type env: dict[CR, CRconfig]
+    :param cr: the root of the CR
+    :type cr: CRnum
+    """
     if env[cr].suffix_hashes: return
     h = hashlib.blake2b()
     s = f"{type(cr)}({sympy.srepr(cr.value)})".encode()
@@ -33,6 +67,14 @@ def _suffix_hash_crnum(env: dict[CR, CRconfig], cr: CRnum):
     env[cr].suffix_hashes = [h.digest()]
 
 def _suffix_hash_crtrig(env: dict[CR, CRconfig], cr: CRtrig):
+    """
+    Performs the suffix hash for CRtrig nodes.
+    
+    :param env: the CRenvironment
+    :type env: dict[CR, CRconfig]
+    :param cr: the root of the CR
+    :type cr: CRtrig
+    """
     if env[cr].suffix_hashes: return
     prev = f"CRtrig({cr.variable})".encode()
     suffix_hashes = [None for i in range(len(cr)//2)]
@@ -47,6 +89,16 @@ def _suffix_hash_crtrig(env: dict[CR, CRconfig], cr: CRtrig):
     env[cr].suffix_hashes = suffix_hashes
 
 def intern_full(env: dict[CR, CRconfig], cr: CR, table: dict[bytes, CR]):
+    """
+    Dynamic dispatch function for interning CR nodes by type
+    
+    :param env: the CRenvironment
+    :type env: dict[CR, CRconfig]
+    :param cr: root of the CR
+    :type cr: CR
+    :param table: CR CSE intern table
+    :type table: dict[bytes, CR]
+    """
     if isinstance(cr, CRnum): 
         _suffix_hash_crnum(env, cr)
         return cr
@@ -69,6 +121,16 @@ def intern_full(env: dict[CR, CRconfig], cr: CR, table: dict[bytes, CR]):
             return _intern_default(suffixes, cr, table)
 
 def _intern_crtrig(suffixes: list[bytes], cr: CRtrig, table: dict[bytes, CR]):
+    """
+    Intern function for CRtrig
+    
+    :param suffixes: Description
+    :type suffixes: list[bytes]
+    :param cr: Description
+    :type cr: CRtrig
+    :param table: Description
+    :type table: dict[bytes, CR]
+    """
     hl = len(cr)//2
     for i in range(1, hl-1):
         if suffixes[i] in table:
@@ -81,6 +143,16 @@ def _intern_crtrig(suffixes: list[bytes], cr: CRtrig, table: dict[bytes, CR]):
     return cr
         
 def _intern_default(suffixes: list[bytes], cr: CR, table: dict[bytes, CR]):
+    """
+    Intern function for CRprod and CRsum types.
+    
+    :param suffixes: Description
+    :type suffixes: list[bytes]
+    :param cr: Description
+    :type cr: CR
+    :param table: Description
+    :type table: dict[bytes, CR]
+    """
     for i in range(1, len(cr)-1):
         if suffixes[i] in table:
             original_cr = table[suffixes[i]]

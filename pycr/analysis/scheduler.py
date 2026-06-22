@@ -27,6 +27,7 @@ def construct_tape(env: dict[CR, CRconfig], root: CR ) -> list[sympy.Expr]:
     return tape
 
 def vectorize_tape(tape: list[sympy.Expr], vector_0: sympy.Symbol, vector_h: sympy.Symbol, width: int):
+    
     # after a tape has been made, we can choose to optionally vectorize it
     vectorized = []
     for slot in tape:
