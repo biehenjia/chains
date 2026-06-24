@@ -2,6 +2,9 @@ from llvmlite import ir
 
 
 class LanePolicy:
+    """
+    CR policy superclass
+    """
     def __init__(self, scalar_type: ir.Type, W):
         self.scalar_type = scalar_type
         self.W = W
@@ -14,14 +17,18 @@ class LanePolicy:
         pass
 
 class ScalarPolicy(LanePolicy):
+    """
+    Default scalar path policy for CR execution
+    """
     def __init__(self, scalar_type): super().__init__(scalar_type,1)
     def store(self, builder, out_ptr, idx, val): builder.store(val, builder.gep(out_ptr, [idx]))
 
 class VectorPolicy(LanePolicy):
     """
-    Docstring for VectorPolicy
+    Vector path policy for CR execution
     """
     def store(self, builder, out_ptr, idx, val):
+        # strided store, loads exactly W at a time, shape divisibility assertion is made before execution path
         addr = builder.gep(out_ptr, [idx])
         vptr = builder.bitcast(addr, ir.PointerType(self.slot_type))
         builder.store(val, vptr, align=4)

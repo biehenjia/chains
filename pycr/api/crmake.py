@@ -2,7 +2,13 @@ import sympy
 from ..core import CRnum, CRsum, sin, cos, tan, cot, log
 
 
-def crmake(node):
+def crmake(node: sympy.Expr):
+    """
+    Implements the CRmake algorithm: converts a symbolic tree into its CR equivalent.
+    
+    :param node: Description
+    :type node: sympy.Expr 
+    """
     if isinstance(node, sympy.Number):
         res = CRnum(node)
     elif isinstance(node, sympy.Symbol):
