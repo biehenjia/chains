@@ -1,6 +1,4 @@
-import sys
 from llvmlite import ir
-import llvmlite.binding as llvm
 
 from .compile import make_target_machine, parse_module, optimize, jit_link
 
@@ -18,27 +16,28 @@ def compile_fn_debug(
     dump_asm: bool = False,
     skip_optimize: bool = False,
     verify_only: bool = False,
-    stream=sys.stderr,
 ):
+    parts: list[str] = []
+
     if dump_ir:
-        print(f"=== unoptimized IR ({func_name}) ===", file=stream)
-        print(str(module), file=stream)
+        parts.append(f"=== unoptimized IR ({func_name}) ===")
+        parts.append(str(module))
 
     tm = make_target_machine(cpu=cpu, features=features)
     llvm_mod = parse_module(module, tm)
 
     if verify_only:
-        return None
+        return None, "\n".join(parts)
 
     if not skip_optimize:
         optimize(llvm_mod, tm, pto)
 
     if dump_opt_ir:
-        print(f"=== optimized IR ({func_name}) ===", file=stream)
-        print(str(llvm_mod), file=stream)
+        parts.append(f"=== optimized IR ({func_name}) ===")
+        parts.append(str(llvm_mod))
 
     if dump_asm:
-        print(f"=== assembly ({func_name}) ===", file=stream)
-        print(tm.emit_assembly(llvm_mod), file=stream)
+        parts.append(f"=== assembly ({func_name}) ===")
+        parts.append(tm.emit_assembly(llvm_mod))
 
-    return jit_link(llvm_mod, tm, func_name, n_dims)
+    return jit_link(llvm_mod, tm, func_name, n_dims), "\n".join(parts)

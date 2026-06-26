@@ -13,6 +13,16 @@ from ..core import (
 from ..crconfig import CRconfig
 
 def dispatch_shift(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
+    """
+    Dispatches IR to point at the to-be shifted operation
+    
+    :param regs: Register object for this scope
+    :type regs: Registers
+    :param cfg: CRconfig wrapping CR to be shifted
+    :type cfg: CRconfig
+    :param env: CR environment
+    :type env: dict[CR, CRconfig]
+    """
     cr, start = cfg.cr, cfg.tape_start
     if isinstance(cr, CRsum): emit_sum_shift(regs, start, len(cr))
     elif isinstance(cr, CRprod): emit_crprod_shift(regs, start, len(cr))

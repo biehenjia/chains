@@ -56,6 +56,7 @@ class Kernel:
     dtype: np.dtype
     width: int
     threads: int
+    diagnostic: str = ""
 
     @property
     def symbol_names(self) -> list[str]:
@@ -127,7 +128,10 @@ def compile( expr: Union[str, CR], *, dtype=np.float32, width: int = 1, threads:
 
     program = lower(cr, width)
     module = emit(program, dtype, name)
-    cfunc = compile_fn_debug(module, name, program.n_dims) if debug else compile_fn(module, name, program.n_dims)
+    if debug:
+        cfunc, diagnostic = compile_fn_debug(module, name, program.n_dims)
+    else:
+        cfunc, diagnostic = compile_fn(module, name, program.n_dims), ""
 
     _ = program._tape_ufunc
 
@@ -137,4 +141,5 @@ def compile( expr: Union[str, CR], *, dtype=np.float32, width: int = 1, threads:
         dtype=np.dtype(dtype),
         width=width,
         threads=threads,
+        diagnostic=diagnostic,
     )
