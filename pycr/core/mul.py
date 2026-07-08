@@ -51,8 +51,7 @@ def mulCRprodCRnum(l: CRprod, r: CRnum):
 
 # CASES FOR SIN AND COS
 
-#TODO: fix mul case for 
-@CRalgebra.defineBinary(MUL, CRprod, CRcos, commutative=True)
+@CRalgebra.defineBinary(MUL, CRprod,CRcos, commutative=True)
 def mulCRprodCRtrig(l: CRprod, r: CRcos):
     if len(r)//2 > len(l):
         o1 = r
@@ -61,7 +60,7 @@ def mulCRprodCRtrig(l: CRprod, r: CRcos):
     elif len(r)//2 < len(l):
         o1 = r.correctT(len(l))
         o2 = l
-        newlength = len(l)//2
+        newlength = len(l)
     else:
         o1 = r
         o2 = l
@@ -69,8 +68,7 @@ def mulCRprodCRtrig(l: CRprod, r: CRcos):
     new_operands = [o1[i]*o2[i] if i < newlength else o1[i] * o2[i-newlength] for i in range(newlength*2)]
     return CRcos(new_operands,r.variable)
 
-#TODO: fix mul case for 
-@CRalgebra.defineBinary(MUL, CRprod, CRsin, commutative=True)
+@CRalgebra.defineBinary(MUL, CRprod,CRsin, commutative=True)
 def mulCRprodCRtrig(l: CRprod, r: CRsin):
     if len(r)//2 > len(l):
         o1 = r
@@ -79,7 +77,7 @@ def mulCRprodCRtrig(l: CRprod, r: CRsin):
     elif len(r)//2 < len(l):
         o1 = r.correctT(len(l))
         o2 = l
-        newlength = len(l)//2
+        newlength = len(l)
     else:
         o1 = r
         o2 = l

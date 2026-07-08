@@ -233,10 +233,10 @@ class CRprod(CR):
 class CRtrig(CR):
     def correctT(self, newlength):
         hl = len(self)//2
-        left = [self[i].copy() if i < hl else CRnum(0) for i in range(len(self))]
-        right = [self[i+hl].copy() if i < hl else CRnum(1) for i in range(len(self))]
-        new_operands = left+ right
-        return CRtrig(new_operands,self.variable)
+        left  = [self[i].copy()    if i < hl else CRnum(0) for i in range(newlength)]
+        right = [self[i+hl].copy() if i < hl else CRnum(1) for i in range(newlength)]
+        new_operands = left + right
+        return type(self)(new_operands, self.variable)
     def simplify(self):
         hl = len(self)//2
         if isinstance(self[0],CRnum) and self[0].is_zero() and isinstance(self[hl],CRnum) and self[hl].is_zero(): return CRnum(0)
