@@ -19,8 +19,8 @@ def generate_nested(regs, traces_byorder, env, policy):
     end_loop(regs, latches.pop())
 
     for i in range(dimensions-1):
-        order = traces_byorder[-i-1]
-        generate_cleanup(regs, order, env)
+        for j in range(-i-1, 0):
+            generate_cleanup(regs, traces_byorder[j], env)
         end_loop(regs, latches.pop())
 
 def generate_loop(regs: Registers, order: list[CR], env: dict[CR, CRconfig], final=False):
