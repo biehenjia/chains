@@ -19,7 +19,7 @@ def prepare_cse(env: dict[CR, CRconfig], root: CR):
 def cse(env: dict[CR, CRconfig], table: dict[bytes, CR], cr:CR):
     """
     Performs common subexpression elimination of CRs
-    
+
     :param env: the CRenvironment
     :type env: dict[CR, CRconfig]
     :param table: the cons table
@@ -28,6 +28,7 @@ def cse(env: dict[CR, CRconfig], table: dict[bytes, CR], cr:CR):
     :type cr: CR
     """
     if isinstance(cr, CRnum): return cr
+    if isinstance(cr, CREconnector): return cr
     cr.operands = [cse(env, table, operand) for operand in cr]
     return intern_full(env, cr, table)
 
@@ -156,8 +157,10 @@ def _intern_default(suffixes: list[bytes], cr: CR, table: dict[bytes, CR]):
     for i in range(1, len(cr)-1):
         if suffixes[i] in table:
             original_cr = table[suffixes[i]]
-            operands = [cr[j].copy() for j in range(i)]
-            operands.append(CREconnector(original_cr, i))
+            # shared-suffix lengths must match: len(cr)-i == len(original_cr)-src_j
+            src_j = len(original_cr) - (len(cr) - i)
+            operands = [cr[k].copy() for k in range(i)]
+            operands.append(CREconnector(original_cr, src_j))
             return type(cr)(operands, cr.variable)
         else:
             table[suffixes[i]] = cr

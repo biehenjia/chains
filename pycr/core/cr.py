@@ -311,6 +311,8 @@ class CREconnector(CRE):
         
         if self.index == -1:
             #print(type(self.original), type(self[0]))
+
+            # access the subtree using 
             return self._access(self.original, self[0])
         
         else: return self.operands[0][self.index].valueof()

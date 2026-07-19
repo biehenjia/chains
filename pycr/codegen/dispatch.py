@@ -27,13 +27,20 @@ def dispatch_shift(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     if isinstance(cr, CRsum): emit_sum_shift(regs, start, len(cr))
     elif isinstance(cr, CRprod): emit_crprod_shift(regs, start, len(cr))
     elif isinstance(cr, CRtrig): emit_crtrig_shift(regs, start, len(cr))
-    elif isinstance(cr, CRE):
 
-        for i in range(len(cr)):
-            if cr[i].variable == cr.variable:
-                child = cr[i]
-                sub_cfg = env[child]
-                regs[start+i] = dispatch_access(regs, sub_cfg, env)
+def dispatch_connector_fetch(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
+    """
+    Pre-shift pass: refresh any slot that holds a CREconnector alias, plus any
+    CRE-typed parent's same-axis child slots (which don't self-shift). Runs
+    before any dispatch_shift on this axis so consumers see the current source.
+    """
+    cr, start = cfg.cr, cfg.tape_start
+    is_cre = isinstance(cr, CRE)
+    for i in range(len(cr)):
+        child = cr[i]
+        needs = isinstance(child, CREconnector) or (is_cre and child.variable == cr.variable)
+        if needs:
+            regs[start+i] = dispatch_access(regs, env[child], env)
 
 def dispatch_access(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     cr, start = cfg.cr, cfg.tape_start
@@ -48,17 +55,17 @@ def dispatch_access(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
         }
 
     if isinstance(cr, CREconnector):
-        sub_cfg = env[cr[0]] # consed subtree
+        sub_cfg = env[cr[0]]
         sub_cr, sub_start = sub_cfg.cr, sub_cfg.tape_start
-        if not isinstance(cr.original, CRtrig) or cr.index != -1:
-            return dispatch_access(regs, sub_cfg, env)
-        else:
-            #print("original:", cr.original)
-            # proof sketch/convince yourself: CREconnector will not recurse
-            # NTS: working on the consed subtree tape, but sticking the original access type
+
+        if cr.index != -1:
+            return regs[sub_start + cr.index]
+
+        if isinstance(cr.original, CRtrig):
             return table[type(cr.original)](regs, sub_start, len(sub_cr))
-    else:
-        return table[type(cr)](regs, start, len(cr))
+        return dispatch_access(regs, sub_cfg, env)
+
+    return table[type(cr)](regs, start, len(cr))
 
 """
 scratch:
