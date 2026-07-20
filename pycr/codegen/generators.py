@@ -1,8 +1,18 @@
 from ..crconfig import CRconfig
-from ..core import CR
+from ..core import CR, CRnum
 from .dispatch import dispatch_shift, dispatch_access, dispatch_fetch, dispatch_reset, dispatch_connector_fetch
 from .looping import begin_loop, end_loop
 from .registers import Registers
+
+
+def _fetch_slots(cr: CR, env: dict[CR, CRconfig]) -> set[int]:
+    """Slots dispatch_fetch will write for this cr — mirror of the predicate in dispatch_fetch."""
+    out = set()
+    for i, child in enumerate(cr):
+        if isinstance(child, CRnum): continue
+        if env[child].least_variable.name != cr.variable.name:
+            out.add(i)
+    return out
 
 
 def generate_nested(regs, traces_byorder, env, policy):
@@ -36,5 +46,6 @@ def generate_loop(regs: Registers, order: list[CR], env: dict[CR, CRconfig], fin
 def generate_cleanup(regs: Registers, order: list[CR], env: dict[CR, CRconfig]):
     for cr in order:
         sub_cfg = env[cr]
-        dispatch_reset(regs, sub_cfg, env)
+        skip = _fetch_slots(cr, env)
+        dispatch_reset(regs, sub_cfg, env, skip=skip)
         dispatch_fetch(regs, sub_cfg, env)
