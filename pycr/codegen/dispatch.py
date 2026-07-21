@@ -30,11 +30,11 @@ def dispatch_shift(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
 
 def dispatch_connector_fetch(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     """
-    Pre-shift pass: refresh a child slot iff its value can actually change at
+    Pre-shift pass: refresh a child slot IFF its value can actually change at
     this axis. Two cases fire:
-      * same-axis CRE children: always move (variable propagation guarantees
+    1. same-axis CRE children: always move (variable propagation guarantees
         the subtree contains an axis-k chain type).
-      * CREconnector children: only when the source's subtree contains a
+    2. CREconnector children: only when the source's subtree contains a
         chain type at this axis. This gate is a correctness fix — without it,
         a CRtrig parent whose cos-block slot is fed by a cross-axis connector
         gets its butterfly accumulator overwritten every inner iteration by

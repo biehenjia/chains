@@ -20,3 +20,4 @@ def emit_crtrig_shift(regs: Registers, start, length):
         b = regs.fma(rti, rti1, regs.neg(regs.mul(ri, ri1)))
         regs[start+i] = a
         regs[start+t+i] = b
+
