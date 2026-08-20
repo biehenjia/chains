@@ -32,10 +32,23 @@ def cse(env: dict[CR, CRconfig], table: dict[bytes, CR], cr:CR):
     cr.operands = [cse(env, table, operand) for operand in cr]
     return intern_full(env, cr, table)
 
+def _child_hash(env: dict[CR, CRconfig], child: CR) -> bytes:
+    """
+    A child's contribution to its parent's hash. CRtrig's own suffix_hashes
+    are deliberately type-erased (a CRsin and CRcos sharing the same operands
+    hash equal, so they can share storage via a CREconnector, which records
+    the concrete type separately for correct access). That erasure is only
+    safe within CRtrig-to-CRtrig matching — a parent (CRtrig or otherwise)
+    folding a child's hash into its OWN identity needs to know the child's
+    concrete type too, since e.g. cos(a)*b and sin(a)*b are different values
+    even when a's underlying quadruple is shared.
+    """
+    return f"{type(child)}".encode() + env[child].suffix_hashes[0]
+
 def _suffix_hash_default(env: dict[CR, CRconfig], cr: CR):
     """
     Performs the default suffix hash for CRsum, CRprod, and CREs
-    
+
     :param env: the CRenvironment
     :type env: dict[CR, CRconfig]
     :param cr: the root of the CR
@@ -47,7 +60,7 @@ def _suffix_hash_default(env: dict[CR, CRconfig], cr: CR):
     for i in range(len(cr)):
         h = hashlib.blake2b()
         h.update(prev)
-        h.update(env[cr[-i-1]].suffix_hashes[0])
+        h.update(_child_hash(env, cr[-i-1]))
         suffix_hashes[-i-1] = h.digest()
         prev = suffix_hashes[-i-1]
     env[cr].suffix_hashes = suffix_hashes
@@ -82,8 +95,8 @@ def _suffix_hash_crtrig(env: dict[CR, CRconfig], cr: CRtrig):
     for i in range(len(cr)//2):
         h = hashlib.blake2b()
         h.update(prev)
-        h.update(env[cr[-i-1]].suffix_hashes[0])
-        h.update(env[cr[len(cr)//2-i-1]].suffix_hashes[0])
+        h.update(_child_hash(env, cr[-i-1]))
+        h.update(_child_hash(env, cr[len(cr)//2-i-1]))
         h.update(b"|")
         suffix_hashes[len(cr)//2-i-1] = h.digest()
         prev = suffix_hashes[len(cr)//2-i-1]

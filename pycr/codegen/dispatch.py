@@ -29,26 +29,18 @@ def dispatch_shift(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
     elif isinstance(cr, CRtrig): emit_crtrig_shift(regs, start, len(cr))
 
 def dispatch_connector_fetch(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
-    """
-    Pre-shift pass: refresh a child slot IFF its value can actually change at
-    this axis. Two cases fire:
-    1. same-axis CRE children: always move (variable propagation guarantees
-        the subtree contains an axis-k chain type).
-    2. CREconnector children: only when the source's subtree contains a
-        chain type at this axis. This gate is a correctness fix — without it,
-        a CRtrig parent whose cos-block slot is fed by a cross-axis connector
-        gets its butterfly accumulator overwritten every inner iteration by
-        the connector's re-fetch from a source that never moved at this axis.
-    """
     cr, start = cfg.cr, cfg.tape_start
     is_cre = isinstance(cr, CRE)
     axis = cr.variable.name
     for i in range(len(cr)):
         child = cr[i]
-        if is_cre and child.variable == cr.variable:
-            regs[start+i] = dispatch_access(regs, env[child], env)
+        if isinstance(child, CRnum):
             continue
-        if isinstance(child, CREconnector) and axis in env[child].touched_axes:
+        if isinstance(child, CREconnector):
+            if axis in env[child].touched_axes:
+                regs[start+i] = dispatch_access(regs, env[child], env)
+            continue
+        if is_cre:
             regs[start+i] = dispatch_access(regs, env[child], env)
 
 def dispatch_access(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
@@ -91,11 +83,6 @@ def dispatch_fetch(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig]):
             regs[cfg.tape_start+i] = res
 
 def dispatch_reset(regs: Registers, cfg: CRconfig, env: dict[CR, CRconfig], skip: set[int] | None = None):
-    """
-    Reset the CR's tape slots to their tape-init values, optionally skipping
-    slots in `skip` (typically the ones an immediately-following fetch will
-    overwrite — eliminating reset-then-fetch dead stores).
-    """
     cr, start = cfg.cr, cfg.tape_start
     if not skip:
         emit_reset(regs, start, len(cr))

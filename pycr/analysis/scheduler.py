@@ -15,8 +15,7 @@ def construct_tape(env: dict[CR, CRconfig], root: CR ) -> list[sympy.Expr]:
     seen = set()
     for cr in root.postorder():
         if isinstance(cr, CREconnector):
-            env[cr].tape_start = len(tape)
-            tape.append(cr.valueof())
+            continue
         elif not isinstance(cr, CRnum ):
             if cr in seen:
                 continue
@@ -56,7 +55,7 @@ def partition_orders(env: dict[CR, CRconfig], root: CR):
     
     seen = set()
     for cr in root.postorder():
-        if not isinstance(cr, CRnum):
+        if not isinstance(cr, CRnum) and not isinstance(cr, CREconnector):
             if cr in seen:
                 continue
 

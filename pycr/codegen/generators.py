@@ -20,17 +20,20 @@ def generate_nested(regs, traces_byorder, env, policy):
     latches = []
     for i in range(dimensions - 1):
         latches.append(begin_loop(regs, regs.bounds[i]))
-        generate_loop(regs, traces_byorder[i], env)
+        order = traces_byorder[i]
+        for cr in order:
+            dispatch_connector_fetch(regs, env[cr], env)
+        if dimensions > i + 1:
+            generate_cleanup(regs, traces_byorder[i + 1], env)
 
     latches.append(begin_loop(regs, regs.bounds[dimensions - 1], policy.W))
     generate_loop(regs, traces_byorder[-1], env, final=True)
-    # regs[-1] = dispatch_access(regs,env[traces_byorder[-1][-1]],env)
-    # policy.emit_tail(regs.builder, regs.result, regs[-1], latches[-1].idx, regs.bounds[dimensions - 1])
     end_loop(regs, latches.pop())
 
-    for i in range(dimensions-1):
-        for j in range(-i-1, 0):
-            generate_cleanup(regs, traces_byorder[j], env)
+
+    for i in range(dimensions - 2, -1, -1):
+        for cr in traces_byorder[i]:
+            dispatch_shift(regs, env[cr], env)
         end_loop(regs, latches.pop())
 
 def generate_loop(regs: Registers, order: list[CR], env: dict[CR, CRconfig], final=False):
